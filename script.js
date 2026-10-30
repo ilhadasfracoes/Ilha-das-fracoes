@@ -7,10 +7,15 @@
 (function () {
   "use strict";
 
-  const STORAGE_KEY = "ilhaDasFracoes_save_v1";
-  const SAVE_VERSION = 1;
+  const STORAGE_KEY = "ilhaDasFracoes_save_v1"; // mesma chave da v1: partidas antigas são migradas, não apagadas
+  const CORRUPTED_BACKUP_KEY = "ilhaDasFracoes_save_v1_corrompido";
+  const SAVE_VERSION = 2; // v2: estrelas fracionadas (1 ou 0,5) por questão
   const POINTS_FIRST_TRY = 10;
   const POINTS_RETRY = 5;
+  const STARS_FIRST_TRY = 1;
+  const STARS_RETRY = 0.5;
+  const NEXT_BUTTON_DELAY_MS = 450; // evita que um clique/Enter repetido avance sem querer
+  const WRONG_FLASH_MS = 1300; // duração do destaque forte da alternativa errada
   const QUESTIONS_PER_PHASE = 4;
   const TOTAL_PHASES = 3;
   const TOTAL_QUESTIONS = TOTAL_PHASES * QUESTIONS_PER_PHASE;
@@ -135,17 +140,45 @@
   }
 
   /**
-   * Gera um SVG de estrela (preenchida ou vazia).
+   * Gera um SVG de estrela inteira, meia estrela ou vazia.
+   * @param {number|boolean} value - 1 (ou true) = inteira, 0.5 = meia, 0 (ou false) = vazia.
    */
-  function svgStar(filled) {
-    const fill = filled ? "#FFD23F" : "#E2E8F0";
-    const stroke = filled ? "#B7791F" : "#94A3B8";
-    return `
-      <svg viewBox="0 0 48 48" aria-hidden="true">
-        <path d="M24 4 L30.2 16.6 L44 18.6 L34 28.4 L36.4 42.2 L24 35.6 L11.6 42.2 L14 28.4 L4 18.6 L17.8 16.6 Z"
-              fill="${fill}" stroke="${stroke}" stroke-width="3.5" stroke-linejoin="round"/>
-      </svg>
-    `;
+  let starUid = 0;
+  function svgStar(value) {
+    const amount = value === true ? 1 : value === false ? 0 : Number(value) || 0;
+    const path = "M24 4 L30.2 16.6 L44 18.6 L34 28.4 L36.4 42.2 L24 35.6 L11.6 42.2 L14 28.4 L4 18.6 L17.8 16.6 Z";
+
+    if (amount >= 1) {
+      return `<svg class="star star-full" viewBox="0 0 48 48" aria-hidden="true"><path d="${path}" fill="#FFD23F" stroke="#B7791F" stroke-width="3.5" stroke-linejoin="round"/></svg>`;
+    }
+    if (amount > 0) {
+      // Metade esquerda dourada e metade direita cinza (id único para não colidir entre SVGs)
+      const id = `half-star-${++starUid}`;
+      return `<svg class="star star-half" viewBox="0 0 48 48" aria-hidden="true">
+        <defs><linearGradient id="${id}" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0.5" stop-color="#FFD23F"/><stop offset="0.5" stop-color="#E2E8F0"/>
+        </linearGradient></defs>
+        <path d="${path}" fill="url(#${id})" stroke="#B7791F" stroke-width="3.5" stroke-linejoin="round"/>
+        <line x1="24" y1="6" x2="24" y2="35" stroke="#B7791F" stroke-width="2" stroke-dasharray="3 3"/>
+      </svg>`;
+    }
+    return `<svg class="star star-empty" viewBox="0 0 48 48" aria-hidden="true"><path d="${path}" fill="#E2E8F0" stroke="#94A3B8" stroke-width="3.5" stroke-linejoin="round"/></svg>`;
+  }
+
+  /** Lista de estrelas pequenas (inteiras, meias ou vazias) para mapa e resumos. */
+  function starIconsHTML(values) {
+    return `<span class="mini-stars">${values.map((v) => svgStar(v)).join("")}</span>`;
+  }
+
+  /** Formata estrelas no padrão brasileiro: 7 → "7", 7.5 → "7,5". */
+  function formatStars(n) {
+    const rounded = Math.round(n * 2) / 2;
+    return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(1).replace(".", ",");
+  }
+
+  /** Texto amigável para a recompensa de uma questão. */
+  function starRewardText(stars) {
+    return stars >= 1 ? "1 estrela inteira" : "meia estrela";
   }
 
   /* ----------------------------------------------------------
@@ -509,11 +542,11 @@
   function createEmptyQuestionState() {
     return {
       completed: false,
-      attempts: 0,
-      points: 0,
-      star: false,
-      selectedOption: null,
-      wrongOptions: []
+      attempts: 0, // número de respostas dadas (erradas + a certa)
+      points: 0, // 10 (de primeira), 5 (depois) ou 0 (pendente)
+      stars: 0, // 1 (de primeira), 0.5 (depois) ou 0 (pendente)
+      selectedOption: null, // alternativa correta, quando concluída
+      wrongOptions: [] // alternativas erradas já tentadas
     };
   }
 
@@ -542,12 +575,15 @@
   }
 
   /**
-   * Reconstrói pontuação total, estrelas e desbloqueios a partir das questões,
-   * garantindo consistência absoluta e impedindo pontos ou estrelas duplicados.
+   * Valida e migra um estado salvo (v1 ou v2). Reconstrói pontuação total,
+   * estrelas e desbloqueios a partir das questões, garantindo consistência e
+   * impedindo pontos ou estrelas duplicados. Questões concluídas continuam concluídas.
    */
   function normalizeState(raw) {
-    const base = createDefaultState();
-    if (!raw || typeof raw !== "object") {
+    if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
+      return null;
+    }
+    if (raw.questions !== undefined && (typeof raw.questions !== "object" || raw.questions === null)) {
       return null;
     }
 
@@ -558,12 +594,12 @@
 
     PHASES.forEach((phase) => {
       phase.questions.forEach((q) => {
-        const src = raw.questions && typeof raw.questions === "object" ? raw.questions[q.id] : null;
+        const src = raw.questions ? raw.questions[q.id] : null;
         const qState = createEmptyQuestionState();
 
         if (src && typeof src === "object") {
           const attempts = Number.isInteger(src.attempts) && src.attempts >= 0 ? Math.min(src.attempts, 99) : 0;
-          const completed = Boolean(src.completed);
+          const completed = src.completed === true;
 
           const wrongSet = new Set();
           if (Array.isArray(src.wrongOptions)) {
@@ -578,30 +614,26 @@
           qState.wrongOptions = Array.from(wrongSet);
 
           if (completed) {
-            qState.attempts = Math.max(1, attempts);
-            // Se acertou de primeira (1 tentativa e nenhuma errada registrada), 10 pontos; caso contrário, 5 pontos.
-            const firstTry = qState.attempts === 1 && qState.wrongOptions.length === 0 && src.points !== POINTS_RETRY;
+            qState.attempts = Math.max(1, attempts, qState.wrongOptions.length + 1);
+            // Acerto de primeira = 1 tentativa, nenhuma alternativa errada e nenhum registro
+            // anterior de recompensa reduzida (compatível com saves v1, que só tinham "points").
+            const firstTry =
+              qState.attempts === 1 &&
+              qState.wrongOptions.length === 0 &&
+              src.points !== POINTS_RETRY &&
+              src.stars !== STARS_RETRY;
             qState.points = firstTry ? POINTS_FIRST_TRY : POINTS_RETRY;
-            qState.star = true;
+            qState.stars = firstTry ? STARS_FIRST_TRY : STARS_RETRY;
             qState.selectedOption = q.correct;
             totalScore += qState.points;
-            totalStars += 1;
+            totalStars += qState.stars;
             anyActivity = true;
           } else {
             qState.attempts = Math.max(attempts, qState.wrongOptions.length);
             qState.points = 0;
-            qState.star = false;
-            if (
-              Number.isInteger(src.selectedOption) &&
-              src.selectedOption >= 0 &&
-              src.selectedOption < 4 &&
-              !qState.wrongOptions.includes(src.selectedOption)
-            ) {
-              qState.selectedOption = src.selectedOption;
-            } else {
-              qState.selectedOption = null;
-            }
-            if (qState.attempts > 0 || qState.selectedOption !== null) {
+            qState.stars = 0;
+            qState.selectedOption = null; // no novo fluxo não existe seleção pendente
+            if (qState.attempts > 0) {
               anyActivity = true;
             }
           }
@@ -659,6 +691,7 @@
   }
 
   let state = createDefaultState();
+  let hadCorruptedSave = false;
 
   function saveState() {
     state.updatedAt = Date.now();
@@ -679,18 +712,25 @@
       showStorageWarning();
       return false;
     }
+    let rawText = null;
     try {
-      const rawText = window.localStorage.getItem(STORAGE_KEY);
+      rawText = window.localStorage.getItem(STORAGE_KEY);
       if (!rawText) return false;
       const parsed = JSON.parse(rawText);
       const normalized = normalizeState(parsed);
-      if (!normalized) return false;
+      if (!normalized) throw new Error("Formato de save inválido");
       state = normalized;
-      // Regrava estado normalizado para manter o armazenamento sempre limpo
+      // Regrava o estado validado/migrado (v1 → v2) para manter o armazenamento consistente
       saveState();
       return true;
     } catch (_) {
-      // Dados corrompidos ou inválidos: reinicia com segurança sem travar o jogo
+      // Dados corrompidos ou inválidos: guarda uma cópia de segurança e começa sem travar o jogo
+      hadCorruptedSave = true;
+      try {
+        if (rawText) window.localStorage.setItem(CORRUPTED_BACKUP_KEY, rawText);
+      } catch (__) {
+        /* sem espaço para a cópia: segue normalmente */
+      }
       state = createDefaultState();
       return false;
     }
@@ -706,9 +746,7 @@
   function hasSavedProgress() {
     if (state.started) return true;
     if (state.totalStars > 0 || state.totalScore > 0) return true;
-    return Object.values(state.questions).some(
-      (q) => q.completed || q.attempts > 0 || q.selectedOption !== null
-    );
+    return Object.values(state.questions).some((q) => q.completed || q.attempts > 0);
   }
 
   /* ----------------------------------------------------------
@@ -735,6 +773,8 @@
     mapHint: document.getElementById("map-hint"),
     mapNodes: document.getElementById("map-nodes"),
     mapExplorer: document.getElementById("map-explorer"),
+    mapPointer: document.getElementById("map-pointer"),
+    mapPointerText: document.getElementById("map-pointer-text"),
 
     qPhaseName: document.getElementById("q-phase-name"),
     qCounter: document.getElementById("q-counter"),
@@ -742,15 +782,16 @@
     qTag: document.getElementById("q-tag"),
     qPrompt: document.getElementById("q-prompt"),
     qFigure: document.getElementById("q-figure"),
+    qInstruction: document.getElementById("q-instruction"),
     qOptions: document.getElementById("q-options"),
     qFeedback: document.getElementById("q-feedback"),
-    btnCheck: document.getElementById("btn-check"),
     btnNext: document.getElementById("btn-next"),
 
     pcIcon: document.getElementById("pc-icon"),
     pcTitle: document.getElementById("pc-title"),
     pcPhaseName: document.getElementById("pc-phase-name"),
     pcStars: document.getElementById("pc-stars"),
+    pcStarCount: document.getElementById("pc-star-count"),
     pcScore: document.getElementById("pc-score"),
     pcFirst: document.getElementById("pc-first"),
     pcUnlock: document.getElementById("pc-unlock"),
@@ -795,7 +836,7 @@
 
   function updateHUD(animateBump) {
     document.querySelectorAll('[data-bind="stars"]').forEach((el) => {
-      el.textContent = String(state.totalStars);
+      el.textContent = formatStars(state.totalStars);
       if (animateBump) {
         const pill = el.closest(".pill");
         if (pill) {
@@ -886,25 +927,19 @@
 
   function renderHome() {
     const saved = hasSavedProgress();
-    if (saved) {
-      els.btnContinue.hidden = false;
-      els.btnNewGame.hidden = false;
-      els.btnPlay.hidden = true;
-      els.continueInfo.hidden = false;
+    // Sem partida: "Jogar" + "Como jogar". Com partida: "Continuar aventura" + "Nova partida" + "Como jogar".
+    els.btnContinue.hidden = !saved;
+    els.btnNewGame.hidden = !saved;
+    els.btnPlay.hidden = saved;
+    els.continueInfo.hidden = !saved;
 
+    if (saved) {
       if (state.gameCompleted) {
-        els.continueInfo.innerHTML = `🏆 Aventura concluída! Você conquistou <strong>${state.totalStars}/12 estrelas</strong> e <strong>${state.totalScore} pontos</strong>.`;
-        els.btnContinue.textContent = "🏆 Ver meu tesouro";
+        els.continueInfo.innerHTML = `🏆 Aventura concluída! <strong>⭐ ${formatStars(state.totalStars)}/12</strong> • <strong>🪙 ${state.totalScore} pontos</strong>`;
       } else {
         const phaseName = PHASES[state.currentPhase].name;
-        els.continueInfo.innerHTML = `🧭 Partida salva em <strong>${phaseName}</strong> • ⭐ ${state.totalStars}/12 estrelas • 🪙 ${state.totalScore} pontos`;
-        els.btnContinue.textContent = "▶ Continuar aventura";
+        els.continueInfo.innerHTML = `🧭 Você parou em <strong>${phaseName}</strong> • ⭐ ${formatStars(state.totalStars)}/12 • 🪙 ${state.totalScore}`;
       }
-    } else {
-      els.btnContinue.hidden = true;
-      els.btnNewGame.hidden = true;
-      els.btnPlay.hidden = false;
-      els.continueInfo.hidden = true;
     }
   }
 
@@ -953,23 +988,35 @@
     let completedCount = 0;
     let points = 0;
     let firstTryCount = 0;
+    let stars = 0;
+    const starValues = [];
 
     phase.questions.forEach((q) => {
       const qs = state.questions[q.id];
+      starValues.push(qs.completed ? qs.stars : 0);
       if (qs.completed) {
         completedCount += 1;
         points += qs.points;
-        if (qs.points === POINTS_FIRST_TRY) {
+        stars += qs.stars;
+        if (qs.stars === STARS_FIRST_TRY) {
           firstTryCount += 1;
         }
       }
     });
 
-    return { completedCount, points, firstTryCount };
+    return { completedCount, points, firstTryCount, stars, starValues };
   }
+
+  /** Metade da altura de um nó do mapa, em % da altura do mapa (nó = 21% da largura; mapa 600×700). */
+  const NODE_HALF_HEIGHT = 21 * (600 / 700) / 2;
+  const TREASURE_POS = { x: "72%", y: "13%" };
 
   function renderMap() {
     els.mapNodes.innerHTML = "";
+
+    // Região que deve receber o destaque (a próxima com questões pendentes)
+    const target = findNextPendingTarget();
+    const nextPhaseIdx = state.gameCompleted ? -1 : target ? target.phaseIndex : -1;
 
     PHASES.forEach((phase, index) => {
       const unlocked = state.unlockedPhases[index];
@@ -995,17 +1042,17 @@
         statusLabel = "Disponível";
       }
 
-      const starsText = "⭐".repeat(stats.completedCount) + "☆".repeat(QUESTIONS_PER_PHASE - stats.completedCount);
+      const isNext = index === nextPhaseIdx;
 
       const li = document.createElement("li");
       const btn = document.createElement("button");
       btn.type = "button";
-      btn.className = `map-node ${stateClass}`;
+      btn.className = `map-node ${stateClass}${isNext ? " is-next" : ""}`;
       btn.style.setProperty("--x", phase.mapPos.x);
       btn.style.setProperty("--y", phase.mapPos.y);
       btn.setAttribute(
         "aria-label",
-        `${phase.name} — ${statusLabel}, ${stats.completedCount} de 4 estrelas`
+        `${phase.name} — ${statusLabel}, ${formatStars(stats.stars)} de 4 estrelas${isNext ? ". Sua próxima aventura é aqui!" : ""}`
       );
 
       btn.innerHTML = `
@@ -1014,7 +1061,7 @@
         <span class="node-label">
           ${phase.shortName}
           <small>${statusLabel}</small>
-          <small class="node-stars" aria-hidden="true">${starsText}</small>
+          <small class="node-stars" aria-hidden="true">${starIconsHTML(stats.starValues)}</small>
         </span>
       `;
 
@@ -1036,9 +1083,9 @@
     const treasureBtn = document.createElement("button");
     treasureBtn.type = "button";
     const treasureUnlocked = state.gameCompleted;
-    treasureBtn.className = `map-node is-treasure ${treasureUnlocked ? "is-done" : "is-locked"}`;
-    treasureBtn.style.setProperty("--x", "72%");
-    treasureBtn.style.setProperty("--y", "13%");
+    treasureBtn.className = `map-node is-treasure ${treasureUnlocked ? "is-done is-next" : "is-locked"}`;
+    treasureBtn.style.setProperty("--x", TREASURE_POS.x);
+    treasureBtn.style.setProperty("--y", TREASURE_POS.y);
     treasureBtn.setAttribute(
       "aria-label",
       treasureUnlocked
@@ -1063,20 +1110,48 @@
     treasureLi.appendChild(treasureBtn);
     els.mapNodes.appendChild(treasureLi);
 
-    // Posiciona o pequeno explorador na região atual da jornada
-    let explorerPos = { x: "30%", y: "72%" };
+    // Posiciona o pequeno explorador e a seta indicadora na região atual da jornada
+    let explorerPos = PHASES[0].mapPos;
+    let pointerPos = PHASES[0].mapPos;
+    let pointerLabel = "Toque aqui para começar!";
+
     if (state.gameCompleted) {
-      explorerPos = { x: "72%", y: "13%" };
-      els.mapHint.innerHTML = "🎉 <strong>Todas as regiões concluídas!</strong> Toque no <strong>Tesouro</strong> ou revise qualquer fase.";
+      explorerPos = TREASURE_POS;
+      pointerPos = TREASURE_POS;
+      pointerLabel = "Abra o seu tesouro!";
+      els.mapHint.innerHTML =
+        "🎉 <strong>Todas as regiões concluídas!</strong> Toque no <strong>Baú do Tesouro</strong> ou revise qualquer fase.";
     } else {
-      const target = findNextPendingTarget();
-      const targetPhaseIdx = target ? target.phaseIndex : state.currentPhase;
-      explorerPos = PHASES[targetPhaseIdx].mapPos;
-      els.mapHint.innerHTML = `👉 Próxima parada: <strong>${PHASES[targetPhaseIdx].name}</strong>. Toque na região para continuar!`;
+      const targetPhaseIdx = nextPhaseIdx !== -1 ? nextPhaseIdx : state.currentPhase;
+      const targetPhase = PHASES[targetPhaseIdx];
+      const targetStats = getPhaseStats(targetPhaseIdx);
+      explorerPos = targetPhase.mapPos;
+      pointerPos = targetPhase.mapPos;
+
+      if (targetPhaseIdx === 0 && targetStats.completedCount === 0 && state.totalStars === 0) {
+        pointerLabel = "Toque aqui para começar!";
+        els.mapHint.innerHTML = `👆 <strong>Toque aqui para começar!</strong> Entre na <strong>${targetPhase.name}</strong>.`;
+      } else if (targetStats.completedCount > 0) {
+        pointerLabel = "Continue aqui!";
+        els.mapHint.innerHTML = `🧭 <strong>Sua aventura continua aqui:</strong> <strong>${targetPhase.name}</strong> (${targetStats.completedCount}/4).`;
+      } else {
+        pointerLabel = "Sua próxima aventura é aqui!";
+        els.mapHint.innerHTML = `✨ <strong>Sua próxima aventura é aqui:</strong> <strong>${targetPhase.name}</strong>!`;
+      }
     }
 
     els.mapExplorer.style.setProperty("--ex", explorerPos.x);
     els.mapExplorer.style.setProperty("--ey", explorerPos.y);
+
+    if (els.mapPointer) {
+      const topPercent = Math.max(6, parseFloat(pointerPos.y) - NODE_HALF_HEIGHT - 2);
+      els.mapPointer.style.setProperty("--px", pointerPos.x);
+      els.mapPointer.style.setProperty("--py", `${topPercent.toFixed(2)}%`);
+      if (els.mapPointerText) {
+        els.mapPointerText.textContent = pointerLabel;
+      }
+      els.mapPointer.hidden = false;
+    }
   }
 
   function openPhase(phaseIndex) {
@@ -1098,11 +1173,20 @@
      Tela de Desafio Matemático (Questões)
      ---------------------------------------------------------- */
 
+  let lastWrongOption = null;
+  let wrongFlashTimer = null;
+  let lastCorrectTimestamp = 0;
+  let isAdvancingQuestion = false;
+
   function getCurrentQuestionObj() {
     return PHASES[state.currentPhase].questions[state.currentQuestion];
   }
 
   function renderQuestion() {
+    clearTimeout(wrongFlashTimer);
+    lastWrongOption = null;
+    isAdvancingQuestion = false;
+
     const phase = PHASES[state.currentPhase];
     const qIndex = state.currentQuestion;
     const q = phase.questions[qIndex];
@@ -1111,12 +1195,18 @@
     els.qPhaseName.textContent = phase.name;
     els.qCounter.textContent = `Questão ${qIndex + 1} de ${QUESTIONS_PER_PHASE}`;
 
-    // Bolinhas de progresso da fase
+    // Bolinhas de progresso da fase (mostram ★ cheia ou ½ estrela conforme conquista)
     els.qDots.innerHTML = "";
     phase.questions.forEach((pq, idx) => {
       const dot = document.createElement("li");
-      const done = state.questions[pq.id].completed;
-      if (done) dot.classList.add("is-done");
+      const pqState = state.questions[pq.id];
+      const done = pqState.completed;
+      if (done) {
+        dot.classList.add("is-done");
+        if (pqState.stars === STARS_RETRY) {
+          dot.classList.add("is-half");
+        }
+      }
       if (idx === qIndex) dot.classList.add("is-current");
       dot.textContent = done ? "★" : String(idx + 1);
       els.qDots.appendChild(dot);
@@ -1135,6 +1225,16 @@
     const letters = ["A", "B", "C", "D"];
     els.qOptions.innerHTML = "";
 
+    if (els.qInstruction) {
+      if (qState.completed) {
+        els.qInstruction.textContent = "Questão concluída! Veja a explicação abaixo:";
+      } else if (qState.wrongOptions.length > 0) {
+        els.qInstruction.textContent = "Leia a dica e toque em outra alternativa:";
+      } else {
+        els.qInstruction.textContent = "Toque na resposta certa:";
+      }
+    }
+
     q.options.forEach((opt, idx) => {
       const btn = document.createElement("button");
       btn.type = "button";
@@ -1143,7 +1243,6 @@
       if (opt.isFigure) btn.classList.add("option-figure");
 
       const isWrong = qState.wrongOptions.includes(idx);
-      const isSelected = qState.selectedOption === idx;
       const isCorrectDone = qState.completed && idx === q.correct;
 
       let statusIcon = "";
@@ -1152,13 +1251,14 @@
         statusIcon = "✓";
       } else if (isWrong) {
         btn.classList.add("is-wrong");
+        if (lastWrongOption === idx) {
+          btn.classList.add("is-wrong-fresh", "shake");
+        }
         statusIcon = "✗";
-      } else if (isSelected) {
-        btn.classList.add("is-selected");
       }
 
       btn.disabled = qState.completed || isWrong;
-      btn.setAttribute("aria-pressed", isSelected || isCorrectDone ? "true" : "false");
+      btn.setAttribute("aria-pressed", isCorrectDone ? "true" : "false");
 
       btn.innerHTML = `
         <span class="opt-letter" aria-hidden="true">${letters[idx]}</span>
@@ -1166,7 +1266,7 @@
         <span class="opt-status" aria-hidden="true">${statusIcon}</span>
       `;
 
-      btn.addEventListener("click", () => selectOption(idx));
+      btn.addEventListener("click", () => answerOption(idx));
       els.qOptions.appendChild(btn);
     });
   }
@@ -1177,14 +1277,15 @@
 
     if (qState.completed) {
       els.qFeedback.classList.add("is-correct");
+      const starLabel = starRewardText(qState.stars);
       els.qFeedback.innerHTML = `
         <p class="feedback-title">
           <span class="fb-icon" aria-hidden="true">🌟</span>
           <span>Muito bem! Você acertou!</span>
         </p>
         <p class="reward">
-          <span class="star-pop">${svgStar(true)}</span>
-          <span>Isso mesmo! Você conquistou <strong>1 estrela</strong> e <strong>+${qState.points} pontos</strong>!</span>
+          <span class="star-pop">${svgStar(qState.stars)}</span>
+          <span>Você conquistou <strong>${starLabel} (${formatStars(qState.stars)} ⭐)</strong> e <strong>+${qState.points} pontos</strong>!</span>
         </p>
         <p class="explain">${q.explanation}</p>
       `;
@@ -1196,64 +1297,59 @@
           <span>Quase lá! Vamos pensar juntos?</span>
         </p>
         <p class="hint">${q.hint}</p>
-        <p>Escolha outra alternativa e clique em <strong>Conferir resposta</strong>.</p>
+        <p class="feedback-try-again">Escolha outra alternativa para tentar de novo!</p>
       `;
     }
   }
 
   function updateQuestionButtons(q, qState) {
     if (qState.completed) {
-      els.btnCheck.hidden = true;
       els.btnNext.hidden = false;
       const isLastInPhase = state.currentQuestion === QUESTIONS_PER_PHASE - 1;
       els.btnNext.textContent = isLastInPhase
         ? "Concluir fase 🎉"
         : "Próxima questão ➜";
     } else {
-      els.btnCheck.hidden = false;
       els.btnNext.hidden = true;
-      els.btnCheck.disabled =
-        qState.selectedOption === null ||
-        qState.wrongOptions.includes(qState.selectedOption);
     }
   }
 
-  function selectOption(optionIndex) {
+  /**
+   * Centraliza a verificação imediata da alternativa escolhida
+   * (seja por clique, toque ou teclado).
+   */
+  function answerOption(optionIndex) {
     const q = getCurrentQuestionObj();
     const qState = state.questions[q.id];
-    if (qState.completed || qState.wrongOptions.includes(optionIndex)) {
+
+    // Impede novas tentativas ou duplicação de pontos/estrelas se já estiver concluída ou já foi tentada
+    if (!q || qState.completed || qState.wrongOptions.includes(optionIndex)) {
       return;
     }
-    state.started = true;
-    qState.selectedOption = optionIndex;
-    saveState();
-    renderOptions(q, qState);
-    updateQuestionButtons(q, qState);
-  }
+    if (optionIndex < 0 || optionIndex >= q.options.length) {
+      return;
+    }
 
-  function checkAnswer() {
-    const q = getCurrentQuestionObj();
-    const qState = state.questions[q.id];
-
-    // Impede pontuar duas vezes uma questão já concluída
-    if (qState.completed) return;
-
-    const chosen = qState.selectedOption;
-    if (chosen === null || qState.wrongOptions.includes(chosen)) return;
-
+    clearTimeout(wrongFlashTimer);
     state.started = true;
     qState.attempts += 1;
 
-    if (chosen === q.correct) {
-      const earned = qState.attempts === 1 ? POINTS_FIRST_TRY : POINTS_RETRY;
+    if (optionIndex === q.correct) {
+      const isFirstTry = qState.attempts === 1 && qState.wrongOptions.length === 0;
+      const earnedPoints = isFirstTry ? POINTS_FIRST_TRY : POINTS_RETRY;
+      const earnedStars = isFirstTry ? STARS_FIRST_TRY : STARS_RETRY;
+
       qState.completed = true;
-      qState.points = earned;
-      qState.star = true;
+      qState.points = earnedPoints;
+      qState.stars = earnedStars;
+      qState.selectedOption = optionIndex;
+      lastWrongOption = null;
+      lastCorrectTimestamp = Date.now();
 
-      state.totalScore += earned;
-      state.totalStars += 1;
+      state.totalScore += earnedPoints;
+      state.totalStars = Math.round((state.totalStars + earnedStars) * 2) / 2;
 
-      // Verifica se concluiu todas as 4 questões da fase atual
+      // Atualiza bolinha de progresso da questão atual
       const phase = PHASES[state.currentPhase];
       const phaseDone = phase.questions.every((pq) => state.questions[pq.id].completed);
       if (phaseDone) {
@@ -1266,34 +1362,47 @@
 
       saveState();
       updateHUD(true);
-      renderOptions(q, qState);
-      renderFeedbackArea(q, qState);
-      updateQuestionButtons(q, qState);
+      renderQuestion();
 
       const optionBtns = els.qOptions.querySelectorAll(".option");
-      if (optionBtns[chosen]) {
-        optionBtns[chosen].classList.add("pop");
+      if (optionBtns[optionIndex]) {
+        optionBtns[optionIndex].classList.add("pop");
       }
-      els.btnNext.focus();
     } else {
-      if (!qState.wrongOptions.includes(chosen)) {
-        qState.wrongOptions.push(chosen);
+      if (!qState.wrongOptions.includes(optionIndex)) {
+        qState.wrongOptions.push(optionIndex);
       }
       qState.selectedOption = null;
+      lastWrongOption = optionIndex;
       saveState();
 
       renderOptions(q, qState);
       renderFeedbackArea(q, qState);
       updateQuestionButtons(q, qState);
 
-      const optionBtns = els.qOptions.querySelectorAll(".option");
-      if (optionBtns[chosen]) {
-        optionBtns[chosen].classList.add("shake");
-      }
+      wrongFlashTimer = setTimeout(() => {
+        lastWrongOption = null;
+        const freshBtn = els.qOptions.querySelector(".option.is-wrong-fresh");
+        if (freshBtn) {
+          freshBtn.classList.remove("is-wrong-fresh");
+        }
+      }, WRONG_FLASH_MS);
     }
   }
 
   function nextQuestionOrFinishPhase() {
+    const q = getCurrentQuestionObj();
+    const qState = state.questions[q.id];
+    // Só avança se a questão atual estiver concluída e não houver transição duplicada em andamento
+    if (!qState || !qState.completed || isAdvancingQuestion) {
+      return;
+    }
+    if (Date.now() - lastCorrectTimestamp < NEXT_BUTTON_DELAY_MS) {
+      return;
+    }
+
+    isAdvancingQuestion = true;
+
     if (state.currentQuestion + 1 < QUESTIONS_PER_PHASE) {
       state.currentQuestion += 1;
       saveState();
@@ -1319,10 +1428,13 @@
     els.pcPhaseName.textContent = `${phase.name} superada com sucesso!`;
 
     els.pcStars.innerHTML = "";
-    for (let i = 0; i < QUESTIONS_PER_PHASE; i++) {
-      els.pcStars.insertAdjacentHTML("beforeend", svgStar(i < stats.completedCount));
-    }
+    stats.starValues.forEach((val) => {
+      els.pcStars.insertAdjacentHTML("beforeend", svgStar(val));
+    });
 
+    if (els.pcStarCount) {
+      els.pcStarCount.textContent = `${formatStars(stats.stars)} / 4`;
+    }
     els.pcScore.textContent = `${stats.points} / 40`;
     els.pcFirst.textContent = `${stats.firstTryCount} de 4`;
 
@@ -1358,12 +1470,12 @@
 
   function renderFinal() {
     els.finalScore.textContent = String(state.totalScore);
-    els.finalStars.textContent = String(state.totalStars);
+    els.finalStars.textContent = formatStars(state.totalStars);
 
     let message = "";
-    if (state.totalScore === 120) {
-      message = "Incrível! Você acertou todas as 12 questões de primeira e dominou a Ilha das Frações!";
-    } else if (state.totalScore >= 95) {
+    if (state.totalStars === 12) {
+      message = "Incrível! Você acertou todas as 12 questões de primeira e conquistou as 12 estrelas da Ilha das Frações!";
+    } else if (state.totalStars >= 9.5) {
       message = "Parabéns, grande explorador! Você mandou super bem nos desafios e abriu o Tesouro Matemático!";
     } else {
       message = "Parabéns pela persistência! Você aprendeu com cada dica, superou todas as regiões e encontrou o Tesouro!";
@@ -1377,7 +1489,7 @@
       tr.innerHTML = `
         <td><strong>${phase.name}</strong></td>
         <td>${stats.points} / 40</td>
-        <td>${"⭐".repeat(stats.completedCount)}</td>
+        <td><div class="summary-stars">${starIconsHTML(stats.starValues)} <span>(${formatStars(stats.stars)}/4)</span></div></td>
         <td>${stats.firstTryCount} de 4</td>
       `;
       els.finalSummary.appendChild(tr);
@@ -1438,7 +1550,6 @@
       });
     });
 
-    els.btnCheck.addEventListener("click", checkAnswer);
     els.btnNext.addEventListener("click", nextQuestionOrFinishPhase);
     els.btnPcContinue.addEventListener("click", handlePhaseContinue);
 
@@ -1458,11 +1569,11 @@
       });
     }
 
-    // Atalhos de teclado na tela de questão: 1-4 ou A-D selecionam, Enter confirma ou avança
+    // Atalhos de teclado na tela de questão: 1-4 ou A-D respondem na hora; Enter avança apenas após acertar
     window.addEventListener("keydown", (ev) => {
       if (screens.question.hidden) return;
       if (els.confirmDialog && els.confirmDialog.open) return;
-      if (ev.altKey || ev.ctrlKey || ev.metaKey) return;
+      if (ev.altKey || ev.ctrlKey || ev.metaKey || ev.repeat) return;
 
       const key = ev.key.toLowerCase();
       const mapKey = {
@@ -1472,22 +1583,22 @@
         "4": 3, d: 3
       };
 
+      const q = getCurrentQuestionObj();
+      const qState = state.questions[q.id];
+
       if (Object.prototype.hasOwnProperty.call(mapKey, key)) {
-        ev.preventDefault();
-        selectOption(mapKey[key]);
+        if (!qState.completed) {
+          ev.preventDefault();
+          answerOption(mapKey[key]);
+        }
       } else if (key === "enter") {
-        // Evita disparo duplo caso o foco já esteja em um botão
+        // Se o foco estiver em um botão (ex.: alternativa ou "Próxima questão"), deixa o clique nativo agir sem duplicar
         if (document.activeElement && document.activeElement.tagName === "BUTTON") {
           return;
         }
-        const q = getCurrentQuestionObj();
-        const qState = state.questions[q.id];
         if (qState.completed) {
           ev.preventDefault();
           nextQuestionOrFinishPhase();
-        } else if (!els.btnCheck.disabled) {
-          ev.preventDefault();
-          checkAnswer();
         }
       }
     });
@@ -1501,8 +1612,11 @@
     loadState();
     bindEvents();
     updateHUD(false);
-    // Sempre apresenta a tela inicial ao abrir/recarregar, exibindo "Continuar" se houver partida salva
+    // Sempre apresenta a tela inicial ao abrir/recarregar, exibindo "Continuar aventura" se houver partida salva
     showScreen("home", { skipSave: true });
+    if (hadCorruptedSave) {
+      showToast("ℹ️ Os dados anteriores estavam inválidos. Iniciamos uma partida limpa.");
+    }
   }
 
   if (document.readyState === "loading") {

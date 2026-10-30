@@ -25,12 +25,13 @@ O jogo está organizado em **3 regiões (fases)** com **4 questões fixas cada**
 
 ## ⭐ Mecânicas e Pontuação
 
-- **Acerto na 1ª tentativa:** `10 pontos` + `1 estrela`.
-- **Erro:** exibe uma dica pedagógica sem punição severa e permite tentar novamente.
-- **Acerto após a 1ª tentativa:** `5 pontos` + `1 estrela`.
-- **Pontuação máxima:** `120 pontos` e `12 estrelas`.
-- **Desbloqueio de fases:** concluir as 4 questões de uma fase desbloqueia automaticamente a próxima região.
-- **Salvamento automático (`localStorage`):** todo o progresso (fase, questão, alternativas respondidas, tentativas, pontos e estrelas) é salvo automaticamente na chave `ilhaDasFracoes_save_v1` a cada ação relevante.
+- **Verificação imediata:** ao selecionar uma alternativa (por clique, toque ou teclado), a resposta é conferida automaticamente.
+- **Acerto na 1ª tentativa:** `10 pontos` + `1 estrela inteira`.
+- **Erro:** destaca a alternativa incorreta, exibe uma dica pedagógica sem punição severa e permite tentar novamente.
+- **Acerto após a 1ª tentativa:** `5 pontos` + `0,5 estrela` (meia estrela).
+- **Pontuação máxima:** `120 pontos` e `12 estrelas` (mínimo de `6 estrelas` ao concluir todas as 12 questões com tentativas extras).
+- **Desbloqueio de fases:** concluir as 4 questões de uma fase desbloqueia automaticamente a próxima região e move o indicador visual no mapa.
+- **Salvamento automático (`localStorage`):** todo o progresso (fase, questão, alternativas respondidas, tentativas, pontos e estrelas) é salvo automaticamente na chave `ilhaDasFracoes_save_v1` a cada ação relevante, com migração compatível com partidas salvas anteriores.
 
 ---
 

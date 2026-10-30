@@ -39,11 +39,14 @@
 
         <p id="continue-info" class="continue-info" hidden></p>
 
+        <!-- Sem partida salva: Jogar + Como jogar. Com partida salva: Continuar aventura + Nova partida + Como jogar -->
         <div class="home-actions">
-          <button id="btn-continue" type="button" class="btn btn-primary btn-big" hidden>▶ Continuar</button>
+          <button id="btn-continue" type="button" class="btn btn-primary btn-big" hidden>▶ Continuar aventura</button>
           <button id="btn-play" type="button" class="btn btn-primary btn-big">▶ Jogar</button>
-          <button id="btn-new-game" type="button" class="btn btn-secondary" hidden>✨ Nova partida</button>
-          <button id="btn-howto" type="button" class="btn btn-ghost">❓ Como jogar</button>
+          <div class="home-secondary">
+            <button id="btn-new-game" type="button" class="btn btn-ghost btn-small" hidden>✨ Nova partida</button>
+            <button id="btn-howto" type="button" class="btn btn-link">❓ Como jogar</button>
+          </div>
         </div>
 
         <p class="privacy-note">🔒 O progresso fica salvo apenas neste dispositivo. Nenhum dado pessoal é coletado.</p>
@@ -59,19 +62,17 @@
               liberada.</span></li>
           <li><span class="howto-icon" aria-hidden="true">👆</span><span>Leia a pergunta, observe a figura e
               <strong>escolha uma alternativa</strong>.</span></li>
-          <li><span class="howto-icon" aria-hidden="true">✅</span><span>Toque em <strong>Conferir
-                resposta</strong>.</span></li>
-          <li><span class="howto-icon" aria-hidden="true">🪙</span><span>Acertou de primeira? <strong>10
-                pontos</strong>! Acertou depois? <strong>5 pontos</strong>.</span></li>
+          <li><span class="howto-icon" aria-hidden="true">✅</span><span>A resposta é <strong>conferida na
+                hora</strong>, assim que você toca nela.</span></li>
+          <li><span class="howto-icon" aria-hidden="true">⭐</span><span>Acertou de primeira? <strong>1 estrela</strong>
+              e <strong>10 pontos</strong>! Acertou depois? <strong>Meia estrela</strong> e <strong>5 pontos</strong>.</span></li>
           <li><span class="howto-icon" aria-hidden="true">💡</span><span>Errou? Sem problema! Leia a dica e tente de
-              novo.</span></li>
-          <li><span class="howto-icon" aria-hidden="true">⭐</span><span>Cada questão concluída vale <strong>1
-                estrela</strong>. São 12 no total!</span></li>
+              novo quantas vezes precisar.</span></li>
           <li><span class="howto-icon" aria-hidden="true">💾</span><span>O jogo <strong>salva sozinho</strong>. Você
               pode continuar depois.</span></li>
         </ol>
-        <p class="howto-keys">⌨️ No computador, use as teclas <kbd>1</kbd> a <kbd>4</kbd> para escolher e
-          <kbd>Enter</kbd> para confirmar.</p>
+        <p class="howto-keys">⌨️ No computador, use as teclas <kbd>1</kbd> a <kbd>4</kbd> para responder e
+          <kbd>Enter</kbd> para ir à próxima questão.</p>
         <div class="actions-row">
           <button id="btn-howto-back" type="button" class="btn btn-primary btn-big">Entendi! 👍</button>
         </div>
@@ -94,10 +95,19 @@
 
       <p id="map-hint" class="map-hint" role="status"></p>
 
-      <div class="map" id="map">
-        <img class="map-bg" src="assets/mapa-ilha.svg" alt="" width="600" height="700">
-        <img class="map-explorer" id="map-explorer" src="assets/explorador.svg" alt="" width="200" height="280">
-        <ol class="map-nodes" id="map-nodes" aria-label="Regiões da ilha"></ol>
+      <div class="map-wrap">
+        <div class="map" id="map">
+          <img class="map-bg" src="assets/mapa-ilha.svg" alt="" width="600" height="700">
+          <img class="map-explorer" id="map-explorer" src="assets/explorador.svg" alt="" width="200" height="280">
+          <ol class="map-nodes" id="map-nodes" aria-label="Regiões da ilha"></ol>
+          <!-- Seta animada que aponta a próxima região (posicionada em % para acompanhar o redimensionamento) -->
+          <div class="map-pointer" id="map-pointer" aria-hidden="true" hidden>
+            <span class="pointer-bubble" id="map-pointer-text"></span>
+            <span class="pointer-arrow">
+              <svg viewBox="0 0 40 44"><path d="M12 2 H28 V22 H38 L20 42 L2 22 H12 Z" fill="#FF5D73" stroke="#23314A" stroke-width="3.5" stroke-linejoin="round"/></svg>
+            </span>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -121,17 +131,21 @@
       </div>
 
       <article class="panel question-card" aria-labelledby="q-prompt">
-        <p id="q-tag" class="q-tag"></p>
-        <h3 id="q-prompt" class="q-prompt"></h3>
-        <div id="q-figure" class="q-figure"></div>
+        <div class="q-main">
+          <p id="q-tag" class="q-tag"></p>
+          <h3 id="q-prompt" class="q-prompt" tabindex="-1"></h3>
+          <div id="q-figure" class="q-figure"></div>
+        </div>
 
-        <div id="q-options" class="options" role="group" aria-label="Alternativas"></div>
+        <div class="q-answer">
+          <p class="q-instruction" id="q-instruction">Toque na resposta certa:</p>
+          <div id="q-options" class="options" role="group" aria-label="Alternativas"></div>
 
-        <div id="q-feedback" class="feedback" aria-live="polite"></div>
+          <div id="q-feedback" class="feedback" aria-live="polite"></div>
 
-        <div class="q-actions">
-          <button id="btn-check" type="button" class="btn btn-primary btn-big" disabled>Conferir resposta</button>
-          <button id="btn-next" type="button" class="btn btn-success btn-big" hidden>Próxima questão ➜</button>
+          <div class="q-actions">
+            <button id="btn-next" type="button" class="btn btn-success btn-big" hidden>Próxima questão ➜</button>
+          </div>
         </div>
       </article>
     </section>
@@ -144,6 +158,10 @@
         <p id="pc-phase-name" class="celebrate-sub"></p>
         <div id="pc-stars" class="stars-row"></div>
         <dl class="stats">
+          <div class="stat">
+            <dt>Estrelas na fase</dt>
+            <dd id="pc-star-count">0</dd>
+          </div>
           <div class="stat">
             <dt>Pontos na fase</dt>
             <dd id="pc-score">0</dd>
