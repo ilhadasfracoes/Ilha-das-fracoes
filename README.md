@@ -1,6 +1,6 @@
 # 🏝️ A Ilha das Frações — Jogo Educativo Infantil 2D
 
-Jogo educativo 2D desenvolvido para auxiliar crianças de **9 a 11 anos** no aprendizado de **frações**. Por meio de uma aventura interativa, os alunos resolvem desafios matemáticos em três regiões da ilha, acumulam pontos, conquistam estrelas e abrem o Tesouro Matemático. Desenvolvido com **HTML, CSS e JavaScript puro**, com interface responsiva, ilustrações vetoriais próprias e hospedagem gratuita pelo **GitHub Pages**.
+Jogo educativo 2D desenvolvido para auxiliar crianças no aprendizado de **frações**. Por meio de uma aventura interativa, os alunos resolvem desafios matemáticos em três regiões da ilha, acumulam pontos, conquistam estrelas e abrem o Tesouro Matemático. Desenvolvido com **HTML, CSS e JavaScript puro**, com interface responsiva, ilustrações vetoriais próprias e hospedagem gratuita pelo **GitHub Pages**.
 
 ---
 
