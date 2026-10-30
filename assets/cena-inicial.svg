@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 420" role="img" aria-labelledby="titulo-cena">
+  <title id="titulo-cena">Ilha tropical com palmeiras e um baú de tesouro escondido</title>
+  <defs>
+    <linearGradient id="ceu" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#6CCBFF"/>
+      <stop offset="1" stop-color="#D4F3FF"/>
+    </linearGradient>
+    <linearGradient id="oceano" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3DB8F5"/>
+      <stop offset="1" stop-color="#1177C9"/>
+    </linearGradient>
+    <radialGradient id="halo">
+      <stop offset="0" stop-color="#FFF4B0"/>
+      <stop offset="1" stop-color="#FFF4B0" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="800" height="420" fill="url(#ceu)"/>
+  <!-- Sol -->
+  <circle cx="680" cy="78" r="92" fill="url(#halo)"/>
+  <circle cx="680" cy="78" r="42" fill="#FFD23F" stroke="#F4A100" stroke-width="4"/>
+  <!-- Nuvens -->
+  <g fill="#fff">
+    <ellipse cx="140" cy="70" rx="56" ry="20"/><ellipse cx="170" cy="56" rx="34" ry="22"/><ellipse cx="116" cy="60" rx="26" ry="16"/>
+    <ellipse cx="470" cy="50" rx="46" ry="16"/><ellipse cx="494" cy="40" rx="26" ry="16"/>
+  </g>
+  <!-- Pássaros -->
+  <g stroke="#23314A" stroke-width="3" fill="none" stroke-linecap="round">
+    <path d="M330 90 q8 -8 16 0 q8 -8 16 0"/>
+    <path d="M372 70 q6 -6 12 0 q6 -6 12 0"/>
+  </g>
+
+  <!-- Mar -->
+  <rect y="262" width="800" height="158" fill="url(#oceano)"/>
+  <g stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.6">
+    <path d="M40 320 q14 -10 28 0 t28 0"/>
+    <path d="M690 340 q14 -10 28 0 t28 0"/>
+    <path d="M560 392 q14 -10 28 0 t28 0"/>
+    <path d="M120 390 q14 -10 28 0 t28 0"/>
+  </g>
+
+  <!-- Ilha -->
+  <path d="M80 300 Q170 206 400 200 Q640 206 730 300 Q400 320 80 300 Z" fill="#FFE29A" stroke="#E9B949" stroke-width="5"/>
+  <path d="M170 266 Q290 182 420 186 Q560 190 650 262 Q420 246 170 266 Z" fill="#6CCB5F"/>
+  <path d="M260 236 Q340 196 420 200 Q500 204 560 232 Q420 222 260 236 Z" fill="#4FB548"/>
+
+  <!-- Palmeira grande à direita -->
+  <path d="M600 280 Q590 220 612 170" stroke="#8B5A2B" stroke-width="14" fill="none" stroke-linecap="round"/>
+  <path d="M600 280 Q590 220 612 170" stroke="#A97142" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="6 10"/>
+  <g fill="#3BA55C" stroke="#23314A" stroke-width="3">
+    <path d="M612 168 Q570 140 540 160 Q578 150 612 172 Z"/>
+    <path d="M612 168 Q650 136 690 156 Q650 150 612 172 Z"/>
+    <path d="M612 168 Q596 126 612 106 Q610 140 616 168 Z"/>
+    <path d="M612 168 Q570 170 556 200 Q584 178 612 172 Z"/>
+    <path d="M612 168 Q656 168 672 198 Q640 178 612 172 Z"/>
+  </g>
+  <circle cx="606" cy="176" r="6" fill="#8B5A2B"/><circle cx="618" cy="178" r="6" fill="#7A4B26"/>
+
+  <!-- Palmeira pequena à esquerda -->
+  <path d="M250 268 Q258 232 244 200" stroke="#8B5A2B" stroke-width="10" fill="none" stroke-linecap="round"/>
+  <g fill="#3BA55C" stroke="#23314A" stroke-width="3">
+    <path d="M244 198 Q214 180 192 194 Q220 188 244 202 Z"/>
+    <path d="M244 198 Q272 176 298 192 Q270 188 244 202 Z"/>
+    <path d="M244 198 Q234 168 246 152 Q246 178 248 198 Z"/>
+  </g>
+
+  <!-- Baú parcialmente enterrado -->
+  <g transform="translate(470 222)">
+    <rect x="-34" y="0" width="68" height="34" rx="6" fill="#B5652B" stroke="#4A230B" stroke-width="4"/>
+    <path d="M-34 0 Q0 -26 34 0 Z" fill="#9A4F1F" stroke="#4A230B" stroke-width="4" stroke-linejoin="round"/>
+    <rect x="-6" y="4" width="12" height="14" rx="3" fill="#FFD23F" stroke="#4A230B" stroke-width="2.5"/>
+    <path d="M-48 34 Q0 22 48 34 Z" fill="#FFE29A"/>
+    <g fill="#fff">
+      <path d="M38 -22 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z"/>
+      <path d="M-40 -14 l2 5 5 2 -5 2 -2 5 -2 -5 -5 -2 5 -2z"/>
+    </g>
+  </g>
+</svg>
+

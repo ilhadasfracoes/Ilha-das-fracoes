@@ -1,0 +1,98 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 700" role="img" aria-labelledby="titulo-mapa">
+  <title id="titulo-mapa">Mapa da Ilha das Frações com caminho da praia até o tesouro</title>
+  <defs>
+    <radialGradient id="mar" cx="50%" cy="50%" r="70%">
+      <stop offset="0" stop-color="#5FD0FF"/>
+      <stop offset="1" stop-color="#1680C9"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Mar -->
+  <rect width="600" height="700" fill="url(#mar)"/>
+  <g stroke="#fff" stroke-width="4" fill="none" stroke-linecap="round" opacity="0.55">
+    <path d="M30 60 q12 -10 24 0 t24 0"/>
+    <path d="M520 30 q12 -10 24 0 t24 0"/>
+    <path d="M540 640 q12 -10 24 0 t24 0"/>
+    <path d="M20 420 q12 -10 24 0 t24 0"/>
+    <path d="M560 400 q10 -8 20 0"/>
+    <path d="M200 690 q12 -10 24 0 t24 0"/>
+  </g>
+
+  <!-- Rosa dos ventos -->
+  <g transform="translate(62 130)">
+    <circle r="30" fill="#FFF8E1" stroke="#23314A" stroke-width="3"/>
+    <path d="M0 -26 L7 0 L0 26 L-7 0 Z" fill="#E63946" stroke="#23314A" stroke-width="2"/>
+    <path d="M-26 0 L0 -7 L26 0 L0 7 Z" fill="#fff" stroke="#23314A" stroke-width="2"/>
+    <text y="-32" text-anchor="middle" font-family="Trebuchet MS, sans-serif" font-size="14" font-weight="bold" fill="#fff">N</text>
+  </g>
+
+  <!-- Ilha: areia -->
+  <path d="M300 40 C420 30 540 80 560 200 C580 320 560 450 520 560 C480 650 380 680 290 670 C180 665 80 620 55 500 C30 380 50 260 100 160 C150 70 220 45 300 40 Z"
+        fill="#FFE29A" stroke="#E9B949" stroke-width="6"/>
+  <!-- Ilha: grama -->
+  <path transform="translate(305 350) scale(0.88) translate(-305 -350)"
+        d="M300 40 C420 30 540 80 560 200 C580 320 560 450 520 560 C480 650 380 680 290 670 C180 665 80 620 55 500 C30 380 50 260 100 160 C150 70 220 45 300 40 Z"
+        fill="#8FD86F"/>
+
+  <!-- Pradaria (parte de baixo) -->
+  <ellipse cx="190" cy="510" rx="120" ry="80" fill="#B5E86F" opacity="0.8"/>
+  <g>
+    <circle cx="110" cy="470" r="6" fill="#FF5D73"/><circle cx="110" cy="470" r="2.4" fill="#FFD23F"/>
+    <circle cx="260" cy="560" r="6" fill="#B388EB"/><circle cx="260" cy="560" r="2.4" fill="#FFD23F"/>
+    <circle cx="130" cy="560" r="6" fill="#fff"/><circle cx="130" cy="560" r="2.4" fill="#FFD23F"/>
+    <circle cx="275" cy="470" r="5" fill="#FF8C42"/><circle cx="275" cy="470" r="2" fill="#FFD23F"/>
+  </g>
+
+  <!-- Floresta (meio, à direita) -->
+  <ellipse cx="420" cy="340" rx="125" ry="105" fill="#4FB548" opacity="0.75"/>
+  <g stroke="#23314A" stroke-width="3">
+    <rect x="337" y="270" width="7" height="20" fill="#7A4B26"/>
+    <circle cx="340" cy="262" r="20" fill="#2E8B57"/>
+    <rect x="497" y="290" width="7" height="20" fill="#7A4B26"/>
+    <circle cx="500" cy="282" r="22" fill="#3BA55C"/>
+    <rect x="477" y="400" width="7" height="20" fill="#7A4B26"/>
+    <circle cx="480" cy="392" r="20" fill="#2E8B57"/>
+    <rect x="347" y="410" width="7" height="20" fill="#7A4B26"/>
+    <circle cx="350" cy="402" r="18" fill="#3BA55C"/>
+    <rect x="437" y="236" width="7" height="18" fill="#7A4B26"/>
+    <circle cx="440" cy="228" r="18" fill="#3BA55C"/>
+  </g>
+
+  <!-- Montanha da caverna (em cima, à esquerda) -->
+  <path d="M100 270 L170 120 L215 150 L262 92 L350 270 Z" fill="#8D99AE" stroke="#23314A" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M170 120 L190 168 M262 92 L250 140" stroke="#5C677D" stroke-width="4" stroke-linecap="round"/>
+  <path d="M190 270 Q190 228 225 226 Q260 228 260 270 Z" fill="#1B1534" stroke="#23314A" stroke-width="4"/>
+
+  <!-- Palmeiras da praia -->
+  <g>
+    <path d="M110 640 Q104 610 116 586" stroke="#8B5A2B" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <g fill="#3BA55C" stroke="#23314A" stroke-width="2.5">
+      <ellipse cx="100" cy="584" rx="20" ry="7" transform="rotate(-25 100 584)"/>
+      <ellipse cx="132" cy="584" rx="20" ry="7" transform="rotate(25 132 584)"/>
+      <ellipse cx="116" cy="576" rx="18" ry="7" transform="rotate(-80 116 576)"/>
+    </g>
+    <path d="M470 610 Q478 580 466 556" stroke="#8B5A2B" stroke-width="9" fill="none" stroke-linecap="round"/>
+    <g fill="#3BA55C" stroke="#23314A" stroke-width="2.5">
+      <ellipse cx="452" cy="556" rx="20" ry="7" transform="rotate(-25 452 556)"/>
+      <ellipse cx="484" cy="556" rx="20" ry="7" transform="rotate(25 484 556)"/>
+      <ellipse cx="466" cy="546" rx="18" ry="7" transform="rotate(-80 466 546)"/>
+    </g>
+  </g>
+
+  <!-- Barco do explorador -->
+  <g transform="translate(330 676)">
+    <path d="M-40 0 L40 0 L28 18 L-28 18 Z" fill="#B5652B" stroke="#23314A" stroke-width="3" stroke-linejoin="round"/>
+    <path d="M0 0 V-44" stroke="#23314A" stroke-width="3"/>
+    <path d="M2 -42 L30 -8 H2 Z" fill="#fff" stroke="#23314A" stroke-width="3" stroke-linejoin="round"/>
+  </g>
+
+  <!-- Caminho tracejado: praia → pradaria → floresta → caverna → tesouro -->
+  <path d="M320 640 Q250 600 180 504 Q300 440 408 350 Q320 250 222 189 Q330 120 432 91"
+        fill="none" stroke="#fff" stroke-width="12" stroke-linecap="round" opacity="0.7"/>
+  <path d="M320 640 Q250 600 180 504 Q300 440 408 350 Q320 250 222 189 Q330 120 432 91"
+        fill="none" stroke="#C0392B" stroke-width="5" stroke-linecap="round" stroke-dasharray="4 14"/>
+
+  <!-- X do tesouro -->
+  <path d="M414 73 L450 109 M450 73 L414 109" stroke="#E63946" stroke-width="10" stroke-linecap="round"/>
+</svg>
+

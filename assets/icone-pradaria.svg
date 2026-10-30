@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" role="img" aria-labelledby="titulo-pradaria">
+  <title id="titulo-pradaria">Pradaria das Frações</title>
+  <defs>
+    <clipPath id="circulo-pradaria"><circle cx="60" cy="60" r="56"/></clipPath>
+  </defs>
+  <g clip-path="url(#circulo-pradaria)">
+    <rect width="120" height="120" fill="#AEE2FF"/>
+    <circle cx="90" cy="30" r="14" fill="#FFD23F" stroke="#F4A100" stroke-width="3"/>
+    <ellipse cx="34" cy="28" rx="16" ry="7" fill="#fff"/>
+    <path d="M-10 78 Q30 52 70 70 Q100 58 130 72 V130 H-10 Z" fill="#7BD66A"/>
+    <path d="M-10 96 Q40 78 80 92 Q110 84 130 94 V130 H-10 Z" fill="#4FB548"/>
+    <!-- Pizza dividida em 4 partes, 3 pintadas -->
+    <g transform="translate(60 84)">
+      <circle r="17" fill="#fff" stroke="#23314A" stroke-width="3"/>
+      <path d="M0 0 V-17 A17 17 0 1 1 -17 0 Z" fill="#FFB703" stroke="#23314A" stroke-width="3" stroke-linejoin="round"/>
+      <path d="M-17 0 H17 M0 -17 V17" stroke="#23314A" stroke-width="3"/>
+    </g>
+    <!-- Flores -->
+    <g>
+      <circle cx="22" cy="92" r="5" fill="#FF5D73"/><circle cx="22" cy="92" r="2" fill="#FFD23F"/>
+      <circle cx="98" cy="96" r="5" fill="#B388EB"/><circle cx="98" cy="96" r="2" fill="#FFD23F"/>
+      <circle cx="34" cy="106" r="4" fill="#fff"/><circle cx="34" cy="106" r="1.6" fill="#FFD23F"/>
+    </g>
+  </g>
+  <circle cx="60" cy="60" r="56" fill="none" stroke="#23314A" stroke-width="4"/>
+</svg>
+

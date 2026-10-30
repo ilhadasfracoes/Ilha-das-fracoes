@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>A Ilha das Frações — Aventura Matemática</title>
+  <meta name="description"
+    content="Jogo educativo 2D para crianças de 9 a 11 anos aprenderem frações em uma aventura em busca do tesouro.">
+  <meta name="theme-color" content="#1B98E0">
+  <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+</head>
+
+<body data-theme="home">
+  <a class="skip-link" href="#main">Pular para o jogo</a>
+
+  <main id="main" class="app">
+
+    <!-- ===================== TELA INICIAL ===================== -->
+    <section id="screen-home" class="screen screen-home" aria-labelledby="home-title">
+      <div class="home-hero">
+        <img class="hero-scene" src="assets/cena-inicial.svg"
+          alt="Ilha tropical com palmeiras e um baú de tesouro escondido" width="800" height="420">
+        <img class="hero-explorer" src="assets/explorador.svg" alt="Pequeno explorador acenando" width="200"
+          height="280">
+      </div>
+
+      <div class="panel home-panel">
+        <h1 id="home-title" class="game-title" tabindex="-1">
+          <span class="title-line-1">A Ilha</span>
+          <span class="title-line-2">das Frações</span>
+        </h1>
+        <p class="mission">
+          Um tesouro está escondido nesta ilha! Ajude o pequeno explorador a atravessar a
+          <strong>pradaria</strong>, a <strong>floresta</strong> e a <strong>caverna</strong>
+          resolvendo desafios de frações.
+        </p>
+
+        <p id="continue-info" class="continue-info" hidden></p>
+
+        <div class="home-actions">
+          <button id="btn-continue" type="button" class="btn btn-primary btn-big" hidden>▶ Continuar</button>
+          <button id="btn-play" type="button" class="btn btn-primary btn-big">▶ Jogar</button>
+          <button id="btn-new-game" type="button" class="btn btn-secondary" hidden>✨ Nova partida</button>
+          <button id="btn-howto" type="button" class="btn btn-ghost">❓ Como jogar</button>
+        </div>
+
+        <p class="privacy-note">🔒 O progresso fica salvo apenas neste dispositivo. Nenhum dado pessoal é coletado.</p>
+      </div>
+    </section>
+
+    <!-- ===================== COMO JOGAR ===================== -->
+    <section id="screen-howto" class="screen screen-howto" aria-labelledby="howto-title" hidden>
+      <div class="panel howto-panel">
+        <h2 id="howto-title" tabindex="-1">Como jogar</h2>
+        <ol class="howto-list">
+          <li><span class="howto-icon" aria-hidden="true">🗺️</span><span>No <strong>mapa</strong>, escolha a região
+              liberada.</span></li>
+          <li><span class="howto-icon" aria-hidden="true">👆</span><span>Leia a pergunta, observe a figura e
+              <strong>escolha uma alternativa</strong>.</span></li>
+          <li><span class="howto-icon" aria-hidden="true">✅</span><span>Toque em <strong>Conferir
+                resposta</strong>.</span></li>
+          <li><span class="howto-icon" aria-hidden="true">🪙</span><span>Acertou de primeira? <strong>10
+                pontos</strong>! Acertou depois? <strong>5 pontos</strong>.</span></li>
+          <li><span class="howto-icon" aria-hidden="true">💡</span><span>Errou? Sem problema! Leia a dica e tente de
+              novo.</span></li>
+          <li><span class="howto-icon" aria-hidden="true">⭐</span><span>Cada questão concluída vale <strong>1
+                estrela</strong>. São 12 no total!</span></li>
+          <li><span class="howto-icon" aria-hidden="true">💾</span><span>O jogo <strong>salva sozinho</strong>. Você
+              pode continuar depois.</span></li>
+        </ol>
+        <p class="howto-keys">⌨️ No computador, use as teclas <kbd>1</kbd> a <kbd>4</kbd> para escolher e
+          <kbd>Enter</kbd> para confirmar.</p>
+        <div class="actions-row">
+          <button id="btn-howto-back" type="button" class="btn btn-primary btn-big">Entendi! 👍</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== MAPA ===================== -->
+    <section id="screen-map" class="screen screen-map" aria-labelledby="map-title" hidden>
+      <header class="topbar">
+        <button type="button" class="btn btn-small btn-light" data-go="home">🏠 <span
+            class="btn-label">Início</span></button>
+        <h2 id="map-title" class="topbar-title" tabindex="-1">Mapa da Aventura</h2>
+        <div class="hud" aria-label="Seu placar">
+          <span class="pill" title="Estrelas"><span aria-hidden="true">⭐</span> <b data-bind="stars">0</b><span
+              class="pill-total">/12</span><span class="sr-only"> estrelas</span></span>
+          <span class="pill" title="Pontos"><span aria-hidden="true">🪙</span> <b data-bind="score">0</b><span
+              class="sr-only"> pontos</span></span>
+        </div>
+      </header>
+
+      <p id="map-hint" class="map-hint" role="status"></p>
+
+      <div class="map" id="map">
+        <img class="map-bg" src="assets/mapa-ilha.svg" alt="" width="600" height="700">
+        <img class="map-explorer" id="map-explorer" src="assets/explorador.svg" alt="" width="200" height="280">
+        <ol class="map-nodes" id="map-nodes" aria-label="Regiões da ilha"></ol>
+      </div>
+    </section>
+
+    <!-- ===================== DESAFIO ===================== -->
+    <section id="screen-question" class="screen screen-question" aria-labelledby="q-phase-name" hidden>
+      <header class="topbar">
+        <button type="button" class="btn btn-small btn-light" data-go="map">🗺️ <span
+            class="btn-label">Mapa</span></button>
+        <h2 id="q-phase-name" class="topbar-title" tabindex="-1"></h2>
+        <div class="hud" aria-label="Seu placar">
+          <span class="pill" title="Estrelas"><span aria-hidden="true">⭐</span> <b data-bind="stars">0</b><span
+              class="pill-total">/12</span><span class="sr-only"> estrelas</span></span>
+          <span class="pill" title="Pontos"><span aria-hidden="true">🪙</span> <b data-bind="score">0</b><span
+              class="sr-only"> pontos</span></span>
+        </div>
+      </header>
+
+      <div class="q-progress">
+        <span id="q-counter" class="q-counter">Questão 1 de 4</span>
+        <ol id="q-dots" class="progress-dots" aria-hidden="true"></ol>
+      </div>
+
+      <article class="panel question-card" aria-labelledby="q-prompt">
+        <p id="q-tag" class="q-tag"></p>
+        <h3 id="q-prompt" class="q-prompt"></h3>
+        <div id="q-figure" class="q-figure"></div>
+
+        <div id="q-options" class="options" role="group" aria-label="Alternativas"></div>
+
+        <div id="q-feedback" class="feedback" aria-live="polite"></div>
+
+        <div class="q-actions">
+          <button id="btn-check" type="button" class="btn btn-primary btn-big" disabled>Conferir resposta</button>
+          <button id="btn-next" type="button" class="btn btn-success btn-big" hidden>Próxima questão ➜</button>
+        </div>
+      </article>
+    </section>
+
+    <!-- ===================== FASE CONCLUÍDA ===================== -->
+    <section id="screen-phase-complete" class="screen screen-celebrate" aria-labelledby="pc-title" hidden>
+      <div class="panel celebrate-card">
+        <img id="pc-icon" class="celebrate-icon" src="assets/icone-pradaria.svg" alt="" width="120" height="120">
+        <h2 id="pc-title" tabindex="-1">Parabéns! Você concluiu esta fase!</h2>
+        <p id="pc-phase-name" class="celebrate-sub"></p>
+        <div id="pc-stars" class="stars-row"></div>
+        <dl class="stats">
+          <div class="stat">
+            <dt>Pontos na fase</dt>
+            <dd id="pc-score">0</dd>
+          </div>
+          <div class="stat">
+            <dt>Acertos de primeira</dt>
+            <dd id="pc-first">0</dd>
+          </div>
+        </dl>
+        <p id="pc-unlock" class="unlock-msg"></p>
+        <div class="actions-row">
+          <button id="btn-pc-continue" type="button" class="btn btn-success btn-big">Continuar aventura ➜</button>
+          <button type="button" class="btn btn-ghost" data-go="map">🗺️ Voltar ao mapa</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================== TESOURO (FINAL) ===================== -->
+    <section id="screen-final" class="screen screen-celebrate screen-final" aria-labelledby="final-title" hidden>
+      <div class="panel celebrate-card final-card">
+        <img class="treasure-img" src="assets/bau-tesouro.svg" alt="Baú do tesouro aberto, cheio de moedas e joias"
+          width="240" height="220">
+        <h2 id="final-title" tabindex="-1">O Tesouro Matemático!</h2>
+        <p id="final-message" class="celebrate-sub"></p>
+        <dl class="stats">
+          <div class="stat stat-big">
+            <dt>Pontuação total</dt>
+            <dd><span id="final-score">0</span><small> / 120</small></dd>
+          </div>
+          <div class="stat stat-big">
+            <dt>Estrelas</dt>
+            <dd><span id="final-stars">0</span><small> / 12</small></dd>
+          </div>
+        </dl>
+        <table class="summary-table">
+          <caption>Resumo da aventura</caption>
+          <thead>
+            <tr>
+              <th scope="col">Região</th>
+              <th scope="col">Pontos</th>
+              <th scope="col">Estrelas</th>
+              <th scope="col">De primeira</th>
+            </tr>
+          </thead>
+          <tbody id="final-summary"></tbody>
+        </table>
+        <div class="actions-row">
+          <button id="btn-play-again" type="button" class="btn btn-primary btn-big">🔄 Jogar novamente</button>
+          <button type="button" class="btn btn-ghost" data-go="map">🗺️ Voltar ao mapa</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Confirmação de nova partida -->
+  <dialog id="confirm-dialog" class="dialog" aria-labelledby="confirm-title" aria-describedby="confirm-message">
+    <form method="dialog" class="dialog-body">
+      <p class="dialog-icon" aria-hidden="true">🧭</p>
+      <h2 id="confirm-title">Começar uma nova partida?</h2>
+      <p id="confirm-message">Todo o progresso atual (pontos, estrelas e fases) será apagado.</p>
+      <div class="actions-row">
+        <button value="cancel" class="btn btn-ghost" id="confirm-cancel">Não, voltar</button>
+        <button value="confirm" class="btn btn-danger" id="confirm-ok">Sim, começar de novo</button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Avisos discretos -->
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="storage-warning" class="storage-warning" role="status" hidden>
+    <span>⚠️ O salvamento automático não está funcionando neste navegador. Você pode jogar, mas o progresso será perdido
+      ao fechar a página.</span>
+    <button type="button" class="storage-close" id="storage-close" aria-label="Fechar aviso">✕</button>
+  </div>
+  <div id="confetti" class="confetti" aria-hidden="true"></div>
+
+  <noscript>
+    <p class="noscript">Para jogar A Ilha das Frações, ative o JavaScript no seu navegador.</p>
+  </noscript>
+
+  <script src="script.js"></script>
+</body>
+
+</html>

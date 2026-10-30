@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 280" role="img" aria-labelledby="titulo-explorador">
+  <title id="titulo-explorador">Pequeno explorador sorridente acenando</title>
+  <!-- Sombra -->
+  <ellipse cx="100" cy="268" rx="56" ry="9" fill="#000" opacity="0.15"/>
+
+  <!-- Mochila (atrás do corpo) -->
+  <rect x="50" y="132" width="100" height="74" rx="22" fill="#E07A2E" stroke="#3D2B1F" stroke-width="4"/>
+
+  <!-- Pernas -->
+  <rect x="77" y="200" width="18" height="46" rx="8" fill="#F4C095" stroke="#3D2B1F" stroke-width="3.5"/>
+  <rect x="105" y="200" width="18" height="46" rx="8" fill="#F4C095" stroke="#3D2B1F" stroke-width="3.5"/>
+  <!-- Botas -->
+  <rect x="68" y="238" width="32" height="20" rx="9" fill="#6D4C41" stroke="#3D2B1F" stroke-width="3.5"/>
+  <rect x="100" y="238" width="32" height="20" rx="9" fill="#6D4C41" stroke="#3D2B1F" stroke-width="3.5"/>
+  <!-- Bermuda -->
+  <rect x="68" y="186" width="64" height="32" rx="10" fill="#8C6A43" stroke="#3D2B1F" stroke-width="3.5"/>
+  <line x1="100" y1="200" x2="100" y2="218" stroke="#3D2B1F" stroke-width="3"/>
+
+  <!-- Braço esquerdo segurando o mapa -->
+  <path d="M72 144 Q50 166 54 190" stroke="#3D2B1F" stroke-width="22" stroke-linecap="round" fill="none"/>
+  <path d="M72 144 Q50 166 54 190" stroke="#2A9D8F" stroke-width="15" stroke-linecap="round" fill="none"/>
+  <g transform="rotate(-14 46 196)">
+    <rect x="30" y="186" width="34" height="22" rx="4" fill="#FFF3C4" stroke="#3D2B1F" stroke-width="3"/>
+    <path d="M36 200 Q44 192 50 198 T60 194" stroke="#E63946" stroke-width="2.5" fill="none" stroke-dasharray="3 3"/>
+    <path d="M55 191 l4 4 m0 -4 l-4 4" stroke="#E63946" stroke-width="2.2"/>
+  </g>
+  <circle cx="54" cy="192" r="9" fill="#F4C095" stroke="#3D2B1F" stroke-width="3"/>
+
+  <!-- Corpo / camiseta -->
+  <rect x="64" y="124" width="72" height="74" rx="26" fill="#2A9D8F" stroke="#3D2B1F" stroke-width="4"/>
+  <!-- Alças da mochila -->
+  <path d="M78 128 L82 190" stroke="#B85C1E" stroke-width="7" stroke-linecap="round"/>
+  <path d="M122 128 L118 190" stroke="#B85C1E" stroke-width="7" stroke-linecap="round"/>
+  <!-- Bolso com estrela -->
+  <rect x="88" y="152" width="24" height="20" rx="5" fill="#238478" stroke="#3D2B1F" stroke-width="2.5"/>
+  <path d="M100 155 l2.6 5.3 5.8 .8 -4.2 4.1 1 5.8 -5.2 -2.7 -5.2 2.7 1 -5.8 -4.2 -4.1 5.8 -.8z" fill="#FFD23F"/>
+
+  <!-- Braço direito acenando -->
+  <path d="M128 142 Q156 124 160 94" stroke="#3D2B1F" stroke-width="22" stroke-linecap="round" fill="none"/>
+  <path d="M128 142 Q156 124 160 94" stroke="#2A9D8F" stroke-width="15" stroke-linecap="round" fill="none"/>
+  <circle cx="160" cy="86" r="11" fill="#F4C095" stroke="#3D2B1F" stroke-width="3"/>
+  <path d="M172 72 q6 4 6 12 M178 64 q9 7 8 20" stroke="#3D2B1F" stroke-width="2.5" fill="none" stroke-linecap="round" opacity="0.6"/>
+
+  <!-- Lenço -->
+  <path d="M82 122 L118 122 L100 144 Z" fill="#E63946" stroke="#3D2B1F" stroke-width="3" stroke-linejoin="round"/>
+
+  <!-- Orelhas -->
+  <circle cx="58" cy="94" r="10" fill="#F4C095" stroke="#3D2B1F" stroke-width="3.5"/>
+  <circle cx="142" cy="94" r="10" fill="#F4C095" stroke="#3D2B1F" stroke-width="3.5"/>
+  <!-- Cabeça -->
+  <circle cx="100" cy="90" r="42" fill="#F4C095" stroke="#3D2B1F" stroke-width="4"/>
+  <!-- Cabelo -->
+  <path d="M62 74 q8 -16 22 -6 q8 -14 22 -3 q12 -11 26 4 q4 -6 6 -2 l-2 -14 h-72 z" fill="#5D3A1A"/>
+
+  <!-- Chapéu de explorador -->
+  <path d="M60 62 Q62 16 100 14 Q138 16 140 62 Z" fill="#E9C891" stroke="#3D2B1F" stroke-width="4" stroke-linejoin="round"/>
+  <path d="M61 52 Q100 60 139 52 L140 62 Q100 70 60 62 Z" fill="#8B5E34"/>
+  <ellipse cx="100" cy="64" rx="60" ry="12" fill="#D4A373" stroke="#3D2B1F" stroke-width="4"/>
+  <path d="M84 26 Q92 20 104 20" stroke="#fff" stroke-width="4" stroke-linecap="round" fill="none" opacity="0.6"/>
+
+  <!-- Sobrancelhas -->
+  <path d="M76 80 Q84 75 92 79" stroke="#3D2B1F" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <path d="M108 79 Q116 75 124 80" stroke="#3D2B1F" stroke-width="3.5" fill="none" stroke-linecap="round"/>
+  <!-- Olhos -->
+  <ellipse cx="84" cy="93" rx="6.5" ry="8.5" fill="#2B2D42"/>
+  <ellipse cx="116" cy="93" rx="6.5" ry="8.5" fill="#2B2D42"/>
+  <circle cx="86.5" cy="89.5" r="2.4" fill="#fff"/>
+  <circle cx="118.5" cy="89.5" r="2.4" fill="#fff"/>
+  <!-- Bochechas -->
+  <ellipse cx="72" cy="107" rx="8" ry="5" fill="#FF8FA3" opacity="0.65"/>
+  <ellipse cx="128" cy="107" rx="8" ry="5" fill="#FF8FA3" opacity="0.65"/>
+  <!-- Nariz e boca -->
+  <path d="M98 99 q3 4 6 0" stroke="#3D2B1F" stroke-width="2.5" fill="none" stroke-linecap="round"/>
+  <path d="M86 109 Q100 126 114 109 Q100 115 86 109 Z" fill="#8B2635" stroke="#3D2B1F" stroke-width="3" stroke-linejoin="round"/>
+  <path d="M93 116 Q100 121 107 116" stroke="#FF8FA3" stroke-width="3" fill="none" stroke-linecap="round"/>
+</svg>
+
