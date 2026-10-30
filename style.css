@@ -531,13 +531,18 @@ kbd {
   transition: left 0.5s ease, top 0.5s ease;
   animation: pointer-bounce 1.25s ease-in-out infinite;
 }
+.map-pointer.is-below {
+  flex-direction: column-reverse;
+  transform: translate(-50%, 0);
+  animation: pointer-bounce-below 1.25s ease-in-out infinite;
+}
 .pointer-bubble {
   background: #FF5D73;
   color: #fff;
   border: 3px solid var(--ink);
   border-radius: 999px;
-  padding: 3px 10px;
-  font-size: clamp(0.68rem, 2.9cqw, 0.9rem);
+  padding: 2px 8px;
+  font-size: clamp(0.58rem, 2.7cqw, 0.9rem);
   font-weight: 900;
   white-space: nowrap;
   box-shadow: 0 3px 0 rgba(35, 49, 74, 0.35);
@@ -547,6 +552,11 @@ kbd {
   height: auto;
   margin-top: -2px;
   filter: drop-shadow(0 3px 0 rgba(35, 49, 74, 0.35));
+}
+.map-pointer.is-below .pointer-arrow {
+  margin-top: 0;
+  margin-bottom: -2px;
+  transform: rotate(180deg);
 }
 .pointer-arrow svg {
   width: 100%;
@@ -684,9 +694,14 @@ kbd {
   display: inline-block; flex: 0 0 auto;
 }
 .swatch-a   { background: #FFB703; }
-.swatch-b   { background: repeating-linear-gradient(45deg, #3A86FF 0 5px, #8EC5FF 5px 9px); }
+.swatch-b   { background: radial-gradient(circle, #FFFFFF 0 3px, #3A86FF 3.5px 100%); }
 .swatch-c   { background: #9C6644; }
-.swatch-cut { background: #FFE3A3 repeating-linear-gradient(45deg, transparent 0 4px, #E07A00 4px 6px); }
+.swatch-cut {
+  background:
+    linear-gradient(35deg, transparent 42%, #C2410C 43% 57%, transparent 58%),
+    linear-gradient(-35deg, transparent 42%, #C2410C 43% 57%, transparent 58%),
+    #FFE3A3;
+}
 
 /* Alternativas */
 .options {
@@ -757,6 +772,21 @@ kbd {
   transform: translateY(-50%);
   font-size: 1.35rem;
   font-weight: 900;
+}
+
+.option.is-selected {
+  border-color: var(--select);
+  background: var(--select-bg);
+  box-shadow: 0 4px 0 var(--select), 0 0 0 3px rgba(47, 111, 219, 0.2);
+}
+.option.is-selected .opt-letter {
+  background: var(--select);
+  color: #fff;
+  border-color: var(--ink);
+}
+.option.is-selected .opt-status {
+  color: var(--select);
+  font-size: 1.15rem;
 }
 
 .option.is-wrong {
@@ -1002,6 +1032,10 @@ kbd {
   0%, 100% { transform: translate(-50%, -100%); }
   50%      { transform: translate(-50%, calc(-100% - 8px)); }
 }
+@keyframes pointer-bounce-below {
+  0%, 100% { transform: translate(-50%, 0); }
+  50%      { transform: translate(-50%, 8px); }
+}
 @keyframes shake { 0%, 100% { transform: translateX(0); } 20%, 60% { transform: translateX(-6px); } 40%, 80% { transform: translateX(6px); } }
 @keyframes pop { 0% { transform: scale(0.75); } 60% { transform: scale(1.06); } 100% { transform: scale(1); } }
 @keyframes bump { 0%, 100% { transform: scale(1); } 40% { transform: scale(1.22); } }
@@ -1020,21 +1054,610 @@ kbd {
   .confetti { display: none; }
 }
 
-/* Ajustes extras para telas com pouca altura (ex.: celulares pequenos ou modo paisagem) */
-@media (max-height: 680px) {
-  .app { justify-content: flex-start; padding-top: 6px; padding-bottom: 10px; }
-  .home-hero { max-height: 24dvh; }
-  .mission { margin-bottom: 6px; }
-  .q-figure { padding: 6px; margin-bottom: 6px; }
-  .fig-bar svg { max-height: 44px; }
-  .fig-circle svg { height: 74px; }
-  .option { min-height: 44px; padding-top: 5px; padding-bottom: 5px; }
+/* ==========================================================
+   Responsividade — Celular (Tela de Perguntas compacta e sem rolagem contínua)
+   Preserva a Tela Inicial e o Mapa no celular.
+   ========================================================== */
+@media (max-width: 767px) {
+  .app:has(> .screen-question:not([hidden])) {
+    justify-content: flex-start;
+    padding: 4px 8px 6px;
+  }
+
+  .screen-question {
+    min-height: calc(100vh - 10px);
+    min-height: calc(100dvh - 10px);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .screen-question .topbar {
+    margin-bottom: 4px;
+    gap: 4px;
+  }
+  .screen-question .topbar .btn-small {
+    min-height: 34px;
+    padding: 0.2em 0.7em;
+    font-size: 0.88rem;
+  }
+  .screen-question .topbar-title {
+    font-size: clamp(0.98rem, 4.2vw, 1.2rem);
+  }
+  .screen-question .pill {
+    padding: 1px 7px;
+    font-size: 0.82rem;
+  }
+
+  .screen-question .q-progress {
+    margin-bottom: 4px;
+    gap: 8px;
+  }
+  .screen-question .q-counter {
+    padding: 1px 9px;
+    font-size: 0.8rem;
+  }
+  .screen-question .progress-dots li {
+    width: 21px;
+    height: 21px;
+    font-size: 0.7rem;
+  }
+
+  .screen-question .question-card {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: clamp(7px, 1.3dvh, 12px) clamp(9px, 2.5vw, 14px);
+    border-width: 3px;
+    border-radius: 18px;
+  }
+
+  .screen-question .q-tag {
+    margin: 0 0 3px;
+    padding: 1px 8px;
+    font-size: 0.75rem;
+  }
+  .screen-question .q-prompt {
+    font-size: clamp(0.92rem, min(3.8vw, 2.25dvh), 1.08rem);
+    line-height: 1.24;
+    margin-bottom: 5px;
+  }
+  .screen-question .q-figure {
+    padding: clamp(4px, 0.8dvh, 8px);
+    margin-bottom: 5px;
+    border-width: 2px;
+    border-radius: 12px;
+  }
+  .screen-question .figure {
+    gap: 4px 10px;
+  }
+  .screen-question .fig-item {
+    gap: 2px;
+  }
+  .screen-question .fig-item figcaption {
+    font-size: 0.82rem;
+  }
+  .screen-question .fig-bar svg {
+    width: min(76vw, 250px);
+    max-height: clamp(32px, 6.2dvh, 48px);
+  }
+  .screen-question .fig-circle svg {
+    height: clamp(64px, 11.5dvh, 96px);
+    max-width: min(36vw, 110px);
+  }
+  .screen-question .fig-legend {
+    margin-top: 3px;
+    gap: 3px 10px;
+    font-size: 0.76rem;
+  }
+  .screen-question .swatch {
+    width: 16px;
+    height: 12px;
+  }
+
+  /* Quando o feedback (dica ou explicação) aparece no celular, compacta a ilustração para manter o botão visível */
+  .screen-question .question-card.has-feedback .q-tag {
+    display: none;
+  }
+  .screen-question .question-card.has-feedback .q-prompt {
+    font-size: clamp(0.86rem, min(3.5vw, 1.95dvh), 0.98rem);
+    margin-bottom: 3px;
+  }
+  .screen-question .question-card.has-feedback .q-figure {
+    padding: 2px 6px;
+    margin-bottom: 3px;
+  }
+  .screen-question .question-card.has-feedback .fig-bar svg {
+    max-height: clamp(20px, 3.8dvh, 32px);
+  }
+  .screen-question .question-card.has-feedback .fig-circle svg {
+    height: clamp(46px, 8dvh, 68px);
+  }
+  .screen-question .question-card.has-feedback .fig-item figcaption {
+    font-size: 0.72rem;
+    line-height: 1.05;
+  }
+  .screen-question .question-card.has-feedback .fig-legend {
+    margin-top: 1px;
+    font-size: 0.7rem;
+  }
+
+  .screen-question .q-instruction {
+    margin: 0 0 4px;
+    font-size: 0.8rem;
+  }
+  .screen-question .options {
+    gap: clamp(5px, 0.9dvh, 8px);
+    margin-bottom: 5px;
+  }
+  .screen-question .option {
+    min-height: clamp(42px, 6.2dvh, 52px);
+    padding: 4px 30px 4px 8px;
+    border-radius: 13px;
+    font-size: clamp(0.92rem, 3.6vw, 1.05rem);
+    box-shadow: 0 3px 0 #C9D5E6;
+  }
+  .screen-question .option.is-selected {
+    box-shadow: 0 3px 0 var(--select), 0 0 0 2px rgba(47, 111, 219, 0.2);
+  }
+  .screen-question .option.is-correct {
+    box-shadow: 0 3px 0 var(--ok);
+  }
+  .screen-question .options:has(.option-text) .option {
+    min-height: clamp(36px, 5.2dvh, 44px);
+    padding-top: 3px;
+    padding-bottom: 3px;
+  }
+  .screen-question .option-text .opt-body {
+    font-size: clamp(0.78rem, 3.2vw, 0.88rem);
+    line-height: 1.18;
+  }
+  .screen-question .option-figure .opt-body svg {
+    max-height: clamp(26px, 4.8dvh, 38px);
+  }
+  .screen-question .opt-letter {
+    width: 25px;
+    height: 25px;
+    font-size: 0.82rem;
+    border-width: 2px;
+  }
+  .screen-question .opt-status {
+    right: 7px;
+    font-size: 1.05rem;
+  }
+
+  .screen-question .feedback {
+    padding: 5px 9px;
+    margin-bottom: 5px;
+    border-width: 2px;
+    border-radius: 12px;
+    font-size: clamp(0.78rem, 3.1vw, 0.86rem);
+    line-height: 1.22;
+  }
+  .screen-question .feedback p {
+    margin: 0.15em 0;
+  }
+  .screen-question .feedback-title {
+    font-size: clamp(0.84rem, 3.3vw, 0.94rem);
+    gap: 5px;
+  }
+  .screen-question .feedback-title .fb-icon {
+    font-size: 1.05rem;
+  }
+  .screen-question .feedback .hint,
+  .screen-question .feedback .explain {
+    padding: 4px 7px;
+    border-radius: 8px;
+  }
+  .screen-question .star-pop {
+    width: 20px;
+    height: 20px;
+  }
+
+  .screen-question .q-actions .btn-big {
+    width: 100%;
+    min-height: clamp(42px, 6.2dvh, 48px);
+    font-size: clamp(0.96rem, 3.8vw, 1.08rem);
+    padding: 0.35em 1.1em;
+  }
+}
+
+/* Celular em orientação horizontal (paisagem, ex.: 640x360) */
+@media (max-height: 500px) and (min-width: 500px) {
+  .app:has(> .screen-question:not([hidden])) {
+    justify-content: flex-start;
+    padding: 3px 10px 5px;
+  }
+  .screen-question .topbar {
+    margin-bottom: 2px;
+  }
+  .screen-question .topbar .btn-small {
+    min-height: 30px;
+    padding: 0.15em 0.65em;
+    font-size: 0.82rem;
+  }
+  .screen-question .topbar-title {
+    font-size: 0.98rem;
+  }
+  .screen-question .pill {
+    padding: 1px 7px;
+    font-size: 0.78rem;
+  }
+  .screen-question .q-progress {
+    margin-bottom: 3px;
+  }
+  .screen-question .q-counter {
+    font-size: 0.76rem;
+    padding: 1px 8px;
+  }
+  .screen-question .progress-dots li {
+    width: 18px;
+    height: 18px;
+    font-size: 0.66rem;
+  }
+  .screen-question .question-card {
+    display: grid;
+    grid-template-columns: 0.92fr 1.08fr;
+    gap: 10px;
+    align-items: center;
+    padding: 6px 10px;
+  }
+  .screen-question .question-card.no-figure {
+    grid-template-columns: 0.82fr 1.18fr;
+  }
+  .screen-question .q-tag {
+    display: none;
+  }
+  .screen-question .q-prompt {
+    font-size: 0.84rem;
+    line-height: 1.2;
+    margin-bottom: 4px;
+  }
+  .screen-question .q-figure {
+    padding: 3px 6px;
+    margin-bottom: 0;
+  }
+  .screen-question .fig-bar svg {
+    max-height: 22px;
+  }
+  .screen-question .fig-circle svg {
+    height: 46px;
+  }
+  .screen-question .fig-item figcaption {
+    font-size: 0.7rem;
+    line-height: 1.05;
+  }
+  .screen-question .fig-legend {
+    font-size: 0.68rem;
+    margin-top: 2px;
+  }
+  .screen-question .q-instruction {
+    font-size: 0.74rem;
+    margin-bottom: 3px;
+  }
+  .screen-question .options {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 4px;
+    margin-bottom: 4px;
+  }
+  .screen-question .option {
+    min-height: 34px;
+    padding: 2px 24px 2px 6px;
+    font-size: 0.82rem;
+  }
+  .screen-question .option-text .opt-body {
+    font-size: 0.72rem;
+    line-height: 1.12;
+  }
+  .screen-question .opt-letter {
+    width: 20px;
+    height: 20px;
+    font-size: 0.72rem;
+  }
+  .screen-question .feedback {
+    padding: 3px 7px;
+    margin-bottom: 4px;
+    font-size: 0.72rem;
+    line-height: 1.15;
+  }
+  .screen-question .feedback-title {
+    font-size: 0.78rem;
+  }
+  .screen-question .feedback .hint,
+  .screen-question .feedback .explain {
+    padding: 2px 5px;
+  }
+  .screen-question .q-actions .btn-big {
+    min-height: 34px;
+    font-size: 0.86rem;
+    padding: 0.2em 0.9em;
+  }
+}
+
+/* Tablets em retrato (ex.: 768x1024) */
+@media (min-width: 768px) and (max-width: 959px) {
+  .app {
+    max-width: 94vw;
+    padding: 14px 20px;
+  }
+  .screen-question {
+    min-height: calc(100dvh - 28px);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+  .screen-question .question-card {
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-evenly;
+    max-width: 100%;
+    width: 100%;
+    padding: 22px 26px;
+  }
+  .screen-question .q-prompt {
+    font-size: clamp(1.18rem, 2.4vw, 1.42rem);
+  }
+  .screen-question .fig-bar svg {
+    width: min(72vw, 340px);
+    max-height: 68px;
+  }
+  .screen-question .fig-circle svg {
+    height: 126px;
+  }
+  .screen-question .option {
+    min-height: 62px;
+    font-size: 1.18rem;
+  }
+}
+
+/* ==========================================================
+   Responsividade — Desktop e Notebook (ex.: 1024x768, 1366x768, 1440x900+)
+   Preenche visualmente a área disponível da janela sem parecer mobile ampliado.
+   ========================================================== */
+@media (min-width: 960px) {
+  .app:has(> .screen-home:not([hidden])),
+  .app:has(> .screen-question:not([hidden])) {
+    max-width: min(96vw, 1480px);
+    min-height: 100vh;
+    min-height: 100dvh;
+    padding: clamp(10px, 1.8dvh, 22px) clamp(18px, 2.8vw, 40px);
+  }
+
+  /* --- Tela Inicial no Desktop --- */
+  .screen-home {
+    min-height: calc(100vh - clamp(20px, 3.6dvh, 44px));
+    min-height: calc(100dvh - clamp(20px, 3.6dvh, 44px));
+    grid-template-columns: 1.16fr 0.94fr;
+    gap: clamp(20px, 2.8vw, 40px);
+    align-items: stretch;
+  }
+
+  .home-hero {
+    max-height: none;
+    height: 100%;
+    min-height: clamp(380px, 76dvh, 720px);
+    aspect-ratio: auto;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .hero-scene {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center bottom;
+  }
+
+  .hero-explorer {
+    left: 20%;
+    bottom: 10%;
+    width: clamp(145px, 23%, 235px);
+    max-height: 74%;
+  }
+
+  .home-panel {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: clamp(22px, 3.8dvh, 46px) clamp(22px, 3vw, 42px);
+  }
+
+  .game-title {
+    font-size: clamp(2.5rem, min(4.5vw, 7dvh), 4.1rem);
+    margin-bottom: 0.24em;
+  }
+
+  .mission {
+    font-size: clamp(1.08rem, min(1.55vw, 2.45dvh), 1.32rem);
+    max-width: 31em;
+    margin-bottom: clamp(14px, 2.4dvh, 24px);
+  }
+
+  .continue-info {
+    font-size: clamp(0.95rem, 1.25vw, 1.08rem);
+    padding: 8px 16px;
+    margin-bottom: clamp(12px, 2dvh, 18px);
+  }
+
+  .home-actions {
+    max-width: 380px;
+    width: 100%;
+    gap: 12px;
+  }
+
+  .home-actions .btn-big {
+    min-height: clamp(52px, 7dvh, 64px);
+    font-size: clamp(1.15rem, 1.55vw, 1.34rem);
+  }
+
+  .privacy-note {
+    margin-top: clamp(14px, 2.2dvh, 22px);
+    font-size: 0.92rem;
+  }
+
+  /* --- Tela de Perguntas no Desktop --- */
+  .screen-question {
+    min-height: calc(100vh - clamp(20px, 3.6dvh, 44px));
+    min-height: calc(100dvh - clamp(20px, 3.6dvh, 44px));
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .screen-question .topbar {
+    margin-bottom: clamp(6px, 1.1dvh, 12px);
+  }
+  .screen-question .topbar-title {
+    font-size: clamp(1.35rem, min(2.3vw, 3.4dvh), 1.95rem);
+  }
+  .screen-question .pill {
+    font-size: clamp(0.96rem, 1.25vw, 1.1rem);
+    padding: 4px 14px;
+  }
+
+  .screen-question .q-progress {
+    margin-bottom: clamp(6px, 1.2dvh, 12px);
+    gap: 12px;
+  }
+  .screen-question .q-counter {
+    font-size: 1rem;
+    padding: 3px 15px;
+  }
+  .screen-question .progress-dots li {
+    width: 28px;
+    height: 28px;
+    font-size: 0.86rem;
+  }
+
+  .screen-question .question-card {
+    flex: 1 1 auto;
+    max-width: 100%;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1.06fr 1fr;
+    gap: clamp(18px, 2.6vw, 36px);
+    align-items: center;
+    padding: clamp(16px, 2.8dvh, 34px) clamp(20px, 2.8vw, 40px);
+  }
+
+  .screen-question .q-main {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+  }
+
+  .screen-question .question-card.no-figure .q-main {
+    background: #F7FBFF;
+    border: 3px dashed #B8D4F0;
+    border-radius: 20px;
+    padding: clamp(18px, 3dvh, 32px);
+  }
+
+  .screen-question .q-tag {
+    align-self: flex-start;
+    font-size: 0.94rem;
+    padding: 4px 14px;
+    margin-bottom: clamp(8px, 1.3dvh, 12px);
+  }
+
+  .screen-question .q-prompt {
+    font-size: clamp(1.18rem, min(1.9vw, 2.9dvh), 1.56rem);
+    line-height: 1.34;
+    margin-bottom: clamp(10px, 1.8dvh, 18px);
+  }
+
+  .screen-question .q-figure {
+    padding: clamp(12px, 2dvh, 22px);
+    margin-bottom: 0;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .screen-question .fig-bar svg {
+    width: min(100%, 380px);
+    max-height: clamp(50px, 9.2dvh, 80px);
+  }
+
+  .screen-question .fig-circle svg {
+    height: clamp(104px, 18dvh, 164px);
+    max-width: 180px;
+  }
+
+  .screen-question .fig-item figcaption {
+    font-size: clamp(1rem, 1.3vw, 1.14rem);
+  }
+
+  .screen-question .fig-legend {
+    font-size: 0.96rem;
+    margin-top: 10px;
+    gap: 8px 18px;
+  }
+
+  .screen-question .q-answer {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    height: 100%;
+  }
+
+  .screen-question .q-instruction {
+    font-size: clamp(0.96rem, 1.25vw, 1.08rem);
+    margin-bottom: clamp(8px, 1.3dvh, 12px);
+  }
+
+  .screen-question .options {
+    gap: clamp(10px, 1.5dvh, 16px);
+    margin-bottom: clamp(10px, 1.6dvh, 16px);
+  }
+
+  .screen-question .option {
+    min-height: clamp(56px, 8.2dvh, 78px);
+    padding: clamp(8px, 1.2dvh, 14px) 42px clamp(8px, 1.2dvh, 14px) 14px;
+    font-size: clamp(1.1rem, 1.55vw, 1.34rem);
+    border-radius: 18px;
+  }
+
+  .screen-question .option-text .opt-body {
+    font-size: clamp(0.94rem, 1.2vw, 1.08rem);
+    line-height: 1.28;
+  }
+
+  .screen-question .option-figure .opt-body svg {
+    max-width: 250px;
+    max-height: clamp(40px, 6.8dvh, 60px);
+  }
+
+  .screen-question .opt-letter {
+    width: clamp(32px, 4.6dvh, 40px);
+    height: clamp(32px, 4.6dvh, 40px);
+    font-size: 1.02rem;
+  }
+
+  .screen-question .feedback {
+    padding: clamp(8px, 1.4dvh, 14px) 16px;
+    margin-bottom: clamp(8px, 1.4dvh, 14px);
+    font-size: clamp(0.92rem, 1.18vw, 1.04rem);
+  }
+
+  .screen-question .feedback-title {
+    font-size: clamp(1.02rem, 1.4vw, 1.18rem);
+  }
+
+  .screen-question .q-actions .btn-big {
+    min-width: min(100%, 310px);
+    min-height: clamp(48px, 6.6dvh, 60px);
+    font-size: clamp(1.12rem, 1.45vw, 1.28rem);
+  }
 }
 
 /* Telas muito estreitas */
 @media (max-width: 380px) {
-  .options { grid-template-columns: 1fr; }
-  .btn-big { font-size: 1.04rem; padding: 0.45em 1.1em; }
-  .option { padding-right: 34px; }
+  .btn-big { font-size: 1.02rem; padding: 0.42em 1.05em; }
+  .option { padding-right: 30px; }
   .summary-table { font-size: 0.78rem; }
 }

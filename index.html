@@ -61,18 +61,18 @@
           <li><span class="howto-icon" aria-hidden="true">🗺️</span><span>No <strong>mapa</strong>, escolha a região
               liberada.</span></li>
           <li><span class="howto-icon" aria-hidden="true">👆</span><span>Leia a pergunta, observe a figura e
-              <strong>escolha uma alternativa</strong>.</span></li>
-          <li><span class="howto-icon" aria-hidden="true">✅</span><span>A resposta é <strong>conferida na
-                hora</strong>, assim que você toca nela.</span></li>
+              <strong>selecione uma alternativa</strong>.</span></li>
+          <li><span class="howto-icon" aria-hidden="true">✅</span><span>Clique em <strong>Confirmar resposta</strong>
+              para conferir se acertou.</span></li>
           <li><span class="howto-icon" aria-hidden="true">⭐</span><span>Acertou de primeira? <strong>1 estrela</strong>
               e <strong>10 pontos</strong>! Acertou depois? <strong>Meia estrela</strong> e <strong>5 pontos</strong>.</span></li>
-          <li><span class="howto-icon" aria-hidden="true">💡</span><span>Errou? Sem problema! Leia a dica e tente de
-              novo quantas vezes precisar.</span></li>
+          <li><span class="howto-icon" aria-hidden="true">💡</span><span>Errou? Sem problema! Leia a dica, escolha outra
+              opção e confirme de novo.</span></li>
           <li><span class="howto-icon" aria-hidden="true">💾</span><span>O jogo <strong>salva sozinho</strong>. Você
               pode continuar depois.</span></li>
         </ol>
-        <p class="howto-keys">⌨️ No computador, use as teclas <kbd>1</kbd> a <kbd>4</kbd> para responder e
-          <kbd>Enter</kbd> para ir à próxima questão.</p>
+        <p class="howto-keys">⌨️ No computador, use as teclas <kbd>1</kbd> a <kbd>4</kbd> (ou <kbd>A</kbd> a <kbd>D</kbd>) para selecionar e
+          <kbd>Enter</kbd> para confirmar ou avançar.</p>
         <div class="actions-row">
           <button id="btn-howto-back" type="button" class="btn btn-primary btn-big">Entendi! 👍</button>
         </div>
@@ -138,13 +138,13 @@
         </div>
 
         <div class="q-answer">
-          <p class="q-instruction" id="q-instruction">Toque na resposta certa:</p>
+          <p class="q-instruction" id="q-instruction">Escolha uma alternativa e confirme:</p>
           <div id="q-options" class="options" role="group" aria-label="Alternativas"></div>
 
           <div id="q-feedback" class="feedback" aria-live="polite"></div>
 
           <div class="q-actions">
-            <button id="btn-next" type="button" class="btn btn-success btn-big" hidden>Próxima questão ➜</button>
+            <button id="btn-next" type="button" class="btn btn-primary btn-big" disabled>Confirmar resposta</button>
           </div>
         </div>
       </article>

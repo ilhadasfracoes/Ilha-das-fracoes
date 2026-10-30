@@ -25,7 +25,7 @@ O jogo está organizado em **3 regiões (fases)** com **4 questões fixas cada**
 
 ## ⭐ Mecânicas e Pontuação
 
-- **Verificação imediata:** ao selecionar uma alternativa (por clique, toque ou teclado), a resposta é conferida automaticamente.
+- **Seleção e confirmação:** o jogador escolhe uma alternativa (por clique, toque ou teclado) e clica em **Confirmar resposta** para validá-la, evitando cliques acidentais. Após acertar, o botão se transforma em **Próxima questão ➜** (ou **Concluir fase 🎉**).
 - **Acerto na 1ª tentativa:** `10 pontos` + `1 estrela inteira`.
 - **Erro:** destaca a alternativa incorreta, exibe uma dica pedagógica sem punição severa e permite tentar novamente.
 - **Acerto após a 1ª tentativa:** `5 pontos` + `0,5 estrela` (meia estrela).

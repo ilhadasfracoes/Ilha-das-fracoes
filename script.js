@@ -84,14 +84,16 @@
       dividers += `<line x1="${x.toFixed(2)}" y1="${pad}" x2="${x.toFixed(2)}" y2="${pad + innerH}" stroke="#23314A" stroke-width="3"/>`;
     }
 
+    const clipId = `clip-bar-${total}-${Math.random().toString(36).slice(2, 7)}`;
+
     return `
       <svg viewBox="0 0 ${width} ${height}" role="img" aria-label="${ariaLabel}">
         <defs>
-          <clipPath id="clip-bar-${total}-${Math.random().toString(36).slice(2, 7)}">
+          <clipPath id="${clipId}">
             <rect x="${pad}" y="${pad}" width="${innerW}" height="${innerH}" rx="10"/>
           </clipPath>
         </defs>
-        <g>
+        <g clip-path="url(#${clipId})">
           ${rects}
           ${overlays}
           ${dividers}
@@ -590,7 +592,7 @@
     const questions = {};
     let totalScore = 0;
     let totalStars = 0;
-    let anyActivity = Boolean(raw.started);
+    let anyActivity = false;
 
     PHASES.forEach((phase) => {
       phase.questions.forEach((q) => {
@@ -697,7 +699,19 @@
     state.updatedAt = Date.now();
     if (!storageAvailable) return false;
     try {
-      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      const serializableQuestions = {};
+      Object.keys(state.questions).forEach((qid) => {
+        const qs = state.questions[qid];
+        serializableQuestions[qid] = {
+          ...qs,
+          selectedOption: qs.completed ? qs.selectedOption : null
+        };
+      });
+      const payload = {
+        ...state,
+        questions: serializableQuestions
+      };
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify(payload));
       return true;
     } catch (_) {
       storageAvailable = false;
@@ -744,7 +758,6 @@
   }
 
   function hasSavedProgress() {
-    if (state.started) return true;
     if (state.totalStars > 0 || state.totalScore > 0) return true;
     return Object.values(state.questions).some((q) => q.completed || q.attempts > 0);
   }
@@ -779,6 +792,7 @@
     qPhaseName: document.getElementById("q-phase-name"),
     qCounter: document.getElementById("q-counter"),
     qDots: document.getElementById("q-dots"),
+    questionCard: document.querySelector(".question-card"),
     qTag: document.getElementById("q-tag"),
     qPrompt: document.getElementById("q-prompt"),
     qFigure: document.getElementById("q-figure"),
@@ -958,10 +972,6 @@
   }
 
   function handleContinueGame() {
-    if (state.gameCompleted) {
-      showScreen("final");
-      return;
-    }
     if (
       state.currentScreen === "question" &&
       state.unlockedPhases[state.currentPhase]
@@ -974,6 +984,10 @@
       state.completedPhases[state.currentPhase]
     ) {
       showScreen("phase-complete");
+      return;
+    }
+    if (state.gameCompleted) {
+      showScreen("final");
       return;
     }
     showScreen("map");
@@ -1144,8 +1158,15 @@
     els.mapExplorer.style.setProperty("--ey", explorerPos.y);
 
     if (els.mapPointer) {
-      const topPercent = Math.max(6, parseFloat(pointerPos.y) - NODE_HALF_HEIGHT - 2);
-      els.mapPointer.style.setProperty("--px", pointerPos.x);
+      const rawX = parseFloat(pointerPos.x);
+      const rawY = parseFloat(pointerPos.y);
+      const clampedX = Math.max(34, Math.min(68, rawX));
+      const placeBelow = rawY < 22;
+      const topPercent = placeBelow
+        ? Math.min(90, rawY + NODE_HALF_HEIGHT + 9.5)
+        : Math.max(8, rawY - NODE_HALF_HEIGHT - 2);
+      els.mapPointer.classList.toggle("is-below", placeBelow);
+      els.mapPointer.style.setProperty("--px", `${clampedX.toFixed(2)}%`);
       els.mapPointer.style.setProperty("--py", `${topPercent.toFixed(2)}%`);
       if (els.mapPointerText) {
         els.mapPointerText.textContent = pointerLabel;
@@ -1165,6 +1186,10 @@
 
     // Se a fase ainda tem questões pendentes, abre na primeira pendente; se já foi concluída, abre na 1ª para revisão
     state.currentQuestion = firstPendingIdx !== -1 ? firstPendingIdx : 0;
+    const targetQ = phase.questions[state.currentQuestion];
+    if (targetQ && !state.questions[targetQ.id].completed) {
+      state.questions[targetQ.id].selectedOption = null;
+    }
     saveState();
     showScreen("question");
   }
@@ -1175,22 +1200,36 @@
 
   let lastWrongOption = null;
   let wrongFlashTimer = null;
-  let lastCorrectTimestamp = 0;
+  let lastConfirmTimestamp = 0;
+  let isConfirmingAnswer = false;
   let isAdvancingQuestion = false;
 
   function getCurrentQuestionObj() {
     return PHASES[state.currentPhase].questions[state.currentQuestion];
   }
 
+  function syncQuestionCardClasses(q, qState) {
+    if (!els.questionCard) return;
+    const hasFigure = typeof q.figure === "function";
+    const hasFeedback = Boolean(qState.completed || qState.wrongOptions.length > 0);
+    els.questionCard.classList.toggle("no-figure", !hasFigure);
+    els.questionCard.classList.toggle("has-feedback", hasFeedback);
+  }
+
   function renderQuestion() {
     clearTimeout(wrongFlashTimer);
     lastWrongOption = null;
+    isConfirmingAnswer = false;
     isAdvancingQuestion = false;
 
     const phase = PHASES[state.currentPhase];
     const qIndex = state.currentQuestion;
     const q = phase.questions[qIndex];
     const qState = state.questions[q.id];
+
+    if (!qState.completed && qState.wrongOptions.includes(qState.selectedOption)) {
+      qState.selectedOption = null;
+    }
 
     els.qPhaseName.textContent = phase.name;
     els.qCounter.textContent = `Questão ${qIndex + 1} de ${QUESTIONS_PER_PHASE}`;
@@ -1216,6 +1255,7 @@
     els.qPrompt.innerHTML = q.prompt;
     els.qFigure.innerHTML = typeof q.figure === "function" ? q.figure() : "";
 
+    syncQuestionCardClasses(q, qState);
     renderOptions(q, qState);
     renderFeedbackArea(q, qState);
     updateQuestionButtons(q, qState);
@@ -1225,13 +1265,20 @@
     const letters = ["A", "B", "C", "D"];
     els.qOptions.innerHTML = "";
 
+    const hasValidSelection =
+      !qState.completed &&
+      Number.isInteger(qState.selectedOption) &&
+      !qState.wrongOptions.includes(qState.selectedOption);
+
     if (els.qInstruction) {
       if (qState.completed) {
         els.qInstruction.textContent = "Questão concluída! Veja a explicação abaixo:";
+      } else if (hasValidSelection) {
+        els.qInstruction.textContent = `Alternativa ${letters[qState.selectedOption]} selecionada. Confirme sua resposta:`;
       } else if (qState.wrongOptions.length > 0) {
-        els.qInstruction.textContent = "Leia a dica e toque em outra alternativa:";
+        els.qInstruction.textContent = "Leia a dica, selecione outra alternativa e confirme:";
       } else {
-        els.qInstruction.textContent = "Toque na resposta certa:";
+        els.qInstruction.textContent = "Escolha uma alternativa e confirme:";
       }
     }
 
@@ -1239,11 +1286,13 @@
       const btn = document.createElement("button");
       btn.type = "button";
       btn.className = "option";
+      btn.dataset.index = String(idx);
       if (opt.isText) btn.classList.add("option-text");
       if (opt.isFigure) btn.classList.add("option-figure");
 
       const isWrong = qState.wrongOptions.includes(idx);
       const isCorrectDone = qState.completed && idx === q.correct;
+      const isSelected = !qState.completed && !isWrong && qState.selectedOption === idx;
 
       let statusIcon = "";
       if (isCorrectDone) {
@@ -1255,10 +1304,13 @@
           btn.classList.add("is-wrong-fresh", "shake");
         }
         statusIcon = "✗";
+      } else if (isSelected) {
+        btn.classList.add("is-selected");
+        statusIcon = "●";
       }
 
       btn.disabled = qState.completed || isWrong;
-      btn.setAttribute("aria-pressed", isCorrectDone ? "true" : "false");
+      btn.setAttribute("aria-pressed", isCorrectDone || isSelected ? "true" : "false");
 
       btn.innerHTML = `
         <span class="opt-letter" aria-hidden="true">${letters[idx]}</span>
@@ -1266,7 +1318,7 @@
         <span class="opt-status" aria-hidden="true">${statusIcon}</span>
       `;
 
-      btn.addEventListener("click", () => answerOption(idx));
+      btn.addEventListener("click", () => selectOption(idx));
       els.qOptions.appendChild(btn);
     });
   }
@@ -1274,6 +1326,7 @@
   function renderFeedbackArea(q, qState) {
     els.qFeedback.className = "feedback";
     els.qFeedback.innerHTML = "";
+    syncQuestionCardClasses(q, qState);
 
     if (qState.completed) {
       els.qFeedback.classList.add("is-correct");
@@ -1281,7 +1334,7 @@
       els.qFeedback.innerHTML = `
         <p class="feedback-title">
           <span class="fb-icon" aria-hidden="true">🌟</span>
-          <span>Muito bem! Você acertou!</span>
+          <span>Resposta correta! Muito bem!</span>
         </p>
         <p class="reward">
           <span class="star-pop">${svgStar(qState.stars)}</span>
@@ -1294,45 +1347,86 @@
       els.qFeedback.innerHTML = `
         <p class="feedback-title">
           <span class="fb-icon" aria-hidden="true">💡</span>
-          <span>Quase lá! Vamos pensar juntos?</span>
+          <span>Resposta incorreta. Tente novamente.</span>
         </p>
         <p class="hint">${q.hint}</p>
-        <p class="feedback-try-again">Escolha outra alternativa para tentar de novo!</p>
+        <p class="feedback-try-again">Selecione outra alternativa e clique em <strong>Confirmar resposta</strong>.</p>
       `;
     }
   }
 
   function updateQuestionButtons(q, qState) {
+    els.btnNext.hidden = false;
+
     if (qState.completed) {
-      els.btnNext.hidden = false;
       const isLastInPhase = state.currentQuestion === QUESTIONS_PER_PHASE - 1;
+      els.btnNext.className = "btn btn-success btn-big";
+      els.btnNext.disabled = false;
       els.btnNext.textContent = isLastInPhase
         ? "Concluir fase 🎉"
         : "Próxima questão ➜";
     } else {
-      els.btnNext.hidden = true;
+      const canConfirm =
+        Number.isInteger(qState.selectedOption) &&
+        qState.selectedOption >= 0 &&
+        qState.selectedOption < q.options.length &&
+        !qState.wrongOptions.includes(qState.selectedOption);
+
+      els.btnNext.className = "btn btn-primary btn-big";
+      els.btnNext.disabled = !canConfirm;
+      els.btnNext.textContent = "Confirmar resposta";
     }
   }
 
   /**
-   * Centraliza a verificação imediata da alternativa escolhida
-   * (seja por clique, toque ou teclado).
+   * Seleciona temporariamente uma alternativa (sem validar, sem contar tentativa e sem salvar).
    */
-  function answerOption(optionIndex) {
+  function selectOption(optionIndex) {
     const q = getCurrentQuestionObj();
     const qState = state.questions[q.id];
 
-    // Impede novas tentativas ou duplicação de pontos/estrelas se já estiver concluída ou já foi tentada
-    if (!q || qState.completed || qState.wrongOptions.includes(optionIndex)) {
+    if (!q || qState.completed || isConfirmingAnswer) {
       return;
     }
     if (optionIndex < 0 || optionIndex >= q.options.length) {
       return;
     }
+    if (qState.wrongOptions.includes(optionIndex)) {
+      return;
+    }
 
+    qState.selectedOption = optionIndex;
+    renderOptions(q, qState);
+    updateQuestionButtons(q, qState);
+  }
+
+  /**
+   * Confirma e avalia a alternativa atualmente selecionada.
+   * Só registra a tentativa e salva no localStorage neste momento.
+   */
+  function confirmAnswer() {
+    const q = getCurrentQuestionObj();
+    const qState = state.questions[q.id];
+
+    if (!q || qState.completed || isConfirmingAnswer) {
+      return;
+    }
+
+    const optionIndex = qState.selectedOption;
+    if (
+      !Number.isInteger(optionIndex) ||
+      optionIndex < 0 ||
+      optionIndex >= q.options.length ||
+      qState.wrongOptions.includes(optionIndex)
+    ) {
+      return;
+    }
+
+    isConfirmingAnswer = true;
     clearTimeout(wrongFlashTimer);
     state.started = true;
     qState.attempts += 1;
+    lastConfirmTimestamp = Date.now();
 
     if (optionIndex === q.correct) {
       const isFirstTry = qState.attempts === 1 && qState.wrongOptions.length === 0;
@@ -1344,12 +1438,10 @@
       qState.stars = earnedStars;
       qState.selectedOption = optionIndex;
       lastWrongOption = null;
-      lastCorrectTimestamp = Date.now();
 
       state.totalScore += earnedPoints;
       state.totalStars = Math.round((state.totalStars + earnedStars) * 2) / 2;
 
-      // Atualiza bolinha de progresso da questão atual
       const phase = PHASES[state.currentPhase];
       const phaseDone = phase.questions.every((pq) => state.questions[pq.id].completed);
       if (phaseDone) {
@@ -1376,6 +1468,7 @@
       lastWrongOption = optionIndex;
       saveState();
 
+      isConfirmingAnswer = false;
       renderOptions(q, qState);
       renderFeedbackArea(q, qState);
       updateQuestionButtons(q, qState);
@@ -1397,7 +1490,7 @@
     if (!qState || !qState.completed || isAdvancingQuestion) {
       return;
     }
-    if (Date.now() - lastCorrectTimestamp < NEXT_BUTTON_DELAY_MS) {
+    if (Date.now() - lastConfirmTimestamp < NEXT_BUTTON_DELAY_MS) {
       return;
     }
 
@@ -1405,6 +1498,11 @@
 
     if (state.currentQuestion + 1 < QUESTIONS_PER_PHASE) {
       state.currentQuestion += 1;
+      const nextQ = getCurrentQuestionObj();
+      const nextQState = state.questions[nextQ.id];
+      if (nextQState && !nextQState.completed) {
+        nextQState.selectedOption = null;
+      }
       saveState();
       renderQuestion();
       window.scrollTo({ top: 0, behavior: "smooth" });
@@ -1412,6 +1510,19 @@
     } else {
       showScreen("phase-complete");
       launchConfetti(26);
+    }
+  }
+
+  function handleMainQuestionAction() {
+    const q = getCurrentQuestionObj();
+    if (!q) return;
+    const qState = state.questions[q.id];
+    if (!qState) return;
+
+    if (qState.completed) {
+      nextQuestionOrFinishPhase();
+    } else {
+      confirmAnswer();
     }
   }
 
@@ -1508,6 +1619,7 @@
     }
 
     if (els.confirmDialog && typeof els.confirmDialog.showModal === "function") {
+      els.confirmDialog.returnValue = "cancel";
       els.confirmDialog.showModal();
     } else {
       const ok = window.confirm(
@@ -1550,7 +1662,7 @@
       });
     });
 
-    els.btnNext.addEventListener("click", nextQuestionOrFinishPhase);
+    els.btnNext.addEventListener("click", handleMainQuestionAction);
     els.btnPcContinue.addEventListener("click", handlePhaseContinue);
 
     if (els.confirmDialog) {
@@ -1569,11 +1681,18 @@
       });
     }
 
-    // Atalhos de teclado na tela de questão: 1-4 ou A-D respondem na hora; Enter avança apenas após acertar
+    // Atalhos de teclado na tela de questão: 1-4 ou A-D selecionam a alternativa; Enter confirma ou avança
     window.addEventListener("keydown", (ev) => {
       if (screens.question.hidden) return;
       if (els.confirmDialog && els.confirmDialog.open) return;
-      if (ev.altKey || ev.ctrlKey || ev.metaKey || ev.repeat) return;
+      if (ev.altKey || ev.ctrlKey || ev.metaKey) return;
+
+      if (ev.repeat) {
+        if (ev.key === "Enter" || ev.key === " ") {
+          ev.preventDefault();
+        }
+        return;
+      }
 
       const key = ev.key.toLowerCase();
       const mapKey = {
@@ -1589,17 +1708,25 @@
       if (Object.prototype.hasOwnProperty.call(mapKey, key)) {
         if (!qState.completed) {
           ev.preventDefault();
-          answerOption(mapKey[key]);
+          selectOption(mapKey[key]);
         }
       } else if (key === "enter") {
-        // Se o foco estiver em um botão (ex.: alternativa ou "Próxima questão"), deixa o clique nativo agir sem duplicar
-        if (document.activeElement && document.activeElement.tagName === "BUTTON") {
+        const activeEl = document.activeElement;
+        if (activeEl && activeEl.tagName === "BUTTON") {
+          // Se o foco está numa alternativa que já é a selecionada, Enter confirma a resposta
+          if (
+            activeEl.classList.contains("option") &&
+            !qState.completed &&
+            Number(activeEl.dataset.index) === qState.selectedOption
+          ) {
+            ev.preventDefault();
+            confirmAnswer();
+          }
+          // Nos demais botões (ex.: outra alternativa via Tab ou o próprio #btn-next), deixa o clique nativo agir sem duplicar
           return;
         }
-        if (qState.completed) {
-          ev.preventDefault();
-          nextQuestionOrFinishPhase();
-        }
+        ev.preventDefault();
+        handleMainQuestionAction();
       }
     });
   }
