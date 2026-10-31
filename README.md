@@ -63,7 +63,7 @@ Como o projeto utiliza apenas HTML, CSS e JavaScript puro sem dependências exte
 
 1. Clone ou baixe este repositório:
    ```bash
-   git clone https://github.com/SEU-USUARIO/ilha-das-fracoes.git
+   git clone https://github.com/ilhadasfracoes/ilha-das-fracoes.git
    cd ilha-das-fracoes
    ```
 2. Abra o arquivo `index.html` diretamente em qualquer navegador moderno (Chrome, Edge, Firefox, Safari), ou inicie um servidor local simples:
